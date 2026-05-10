@@ -1,0 +1,9 @@
+package org.rcbg.device_management_service.repositories;
+
+import org.rcbg.device_management_service.models.entities.Device;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import java.util.UUID;
+
+public interface DeviceRepository extends JpaRepository<Device, UUID> {
+}
