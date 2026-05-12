@@ -11,6 +11,7 @@ import org.rcbg.device_management_service.repositories.HomeRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.UUID;
 
 @Slf4j
@@ -26,8 +27,10 @@ public class HomeManagementService {
         return HomeMapper.INSTANCE.toDto(home);
     }
 
-    public void getListOfHomes() {
-        return;
+    // TODO: Add pagination
+    // TODO: Filter out homes that user is not member of.
+    public List<ResponseHomeDto> getListOfHomes(UUID userId) {
+        return repository.findAll().stream().map(HomeMapper.INSTANCE::toDto).toList();
     }
 
     @Transactional

@@ -5,13 +5,11 @@ import org.rcbg.device_management_service.models.dto.homes.ResponseHomeDto;
 import org.rcbg.device_management_service.services.HomeManagementService;
 import org.rcbg.device_management_service.validators.groups.CreateGroup;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -23,10 +21,11 @@ public class HomesController {
     private HomeManagementService homeManagementService;
 
     @GetMapping
-    public List<String> getAllAvailableHomes() {
-        List<String> result = new ArrayList<>();
-        result.add("Not Implemented");
-        return result;
+    public ResponseEntity<List<ResponseHomeDto>> getAllAvailableHomes() {
+        List<ResponseHomeDto> responseDtoList = homeManagementService.getListOfHomes(UUID.randomUUID());
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(responseDtoList);
     }
 
     // TODO: Add userId parameter once keycloak is setup
@@ -42,7 +41,7 @@ public class HomesController {
     public ResponseEntity<ResponseHomeDto> getHomeByHomeId(@PathVariable String homeId) {
         ResponseHomeDto responseDto = homeManagementService.getHome(UUID.fromString(homeId), UUID.randomUUID());
         return ResponseEntity
-                .status(HttpStatus.CREATED)
+                .status(HttpStatus.OK)
                 .body(responseDto);
     }
 
