@@ -29,6 +29,7 @@ public class HomesController {
         return result;
     }
 
+    // TODO: Add userId parameter once keycloak is setup
     @PostMapping
     public ResponseEntity<ResponseHomeDto> createNewHome(@Validated(CreateGroup.class) @RequestBody RequestHomeDto requestDto) {
         ResponseHomeDto responseDto = homeManagementService.createHome(requestDto, UUID.randomUUID());
@@ -38,8 +39,11 @@ public class HomesController {
     }
 
     @GetMapping("/{homeId}")
-    public String getHomeByHomeId(@PathVariable String homeId) {
-        return "Not Implemented";
+    public ResponseEntity<ResponseHomeDto> getHomeByHomeId(@PathVariable String homeId) {
+        ResponseHomeDto responseDto = homeManagementService.getHome(UUID.fromString(homeId), UUID.randomUUID());
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(responseDto);
     }
 
     @PatchMapping("/{homeId}")

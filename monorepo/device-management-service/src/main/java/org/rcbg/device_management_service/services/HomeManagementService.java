@@ -2,6 +2,7 @@ package org.rcbg.device_management_service.services;
 
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
+import org.rcbg.device_management_service.exceptions.ObjectDoesNotExistException;
 import org.rcbg.device_management_service.mappers.HomeMapper;
 import org.rcbg.device_management_service.models.dto.homes.RequestHomeDto;
 import org.rcbg.device_management_service.models.dto.homes.ResponseHomeDto;
@@ -19,8 +20,10 @@ public class HomeManagementService {
     @Autowired
     private HomeRepository repository;
 
-    public void getHome(UUID homeId) {
-        return;
+    public ResponseHomeDto getHome(UUID homeId, UUID userId) {
+        Home home = findHome(homeId, userId);
+        checkOwnership(home, userId);
+        return HomeMapper.INSTANCE.toDto(home);
     }
 
     public void getListOfHomes() {
@@ -42,6 +45,21 @@ public class HomeManagementService {
     }
 
     public void deleteHome(UUID homeId) {
+        return;
+    }
+
+    private Home findHome(UUID homeId, UUID userId) {
+        return repository.findById(homeId).orElseThrow(
+                () -> new ObjectDoesNotExistException(
+                        String.format("Home object with ID: %s does not exists", homeId),
+                        userId
+                )
+        );
+
+    }
+
+    private void checkOwnership(Home home, UUID userId) {
+        // TODO: Implement when roles will be ready
         return;
     }
 }
