@@ -46,12 +46,21 @@ public class HomesController {
     }
 
     @PatchMapping("/{homeId}")
-    public String patchHomeByHomeId(@PathVariable String homeId, @RequestBody String updateContent) {
-        return "Not Implemented";
+    public ResponseEntity<ResponseHomeDto> patchHomeByHomeId(@PathVariable String homeId, @RequestBody RequestHomeDto updateContent) {
+        ResponseHomeDto responseHomeDto = homeManagementService.updateHome(UUID.fromString(homeId),
+                UUID.randomUUID(),
+                updateContent);
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(responseHomeDto);
+
     }
 
     @DeleteMapping("/{homeId}")
-    public String deleteHomeByHomeId(@PathVariable String homeId) {
-        return "Not Implemented";
+    public ResponseEntity<Void> deleteHomeByHomeId(@PathVariable String homeId) {
+        homeManagementService.deleteHome(UUID.fromString(homeId), UUID.randomUUID());
+        return ResponseEntity
+                .status(HttpStatus.NO_CONTENT)
+                .build();
     }
 }

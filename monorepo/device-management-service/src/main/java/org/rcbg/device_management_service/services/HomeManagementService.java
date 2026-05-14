@@ -43,12 +43,19 @@ public class HomeManagementService {
         return HomeMapper.INSTANCE.toDto(dbResult);
     }
 
-    public void updateHome(UUID homeId) {
-        return;
+    @Transactional
+    public ResponseHomeDto updateHome(UUID homeId, UUID userId, RequestHomeDto dto) {
+        Home home = findHome(homeId, userId);
+        checkOwnership(home, userId);
+        HomeMapper.INSTANCE.updateHomeFromDto(dto, home);
+        return HomeMapper.INSTANCE.toDto(home);
     }
 
-    public void deleteHome(UUID homeId) {
-        return;
+    @Transactional
+    public void deleteHome(UUID homeId, UUID userId) {
+        Home home = findHome(homeId, userId);
+        checkOwnership(home, userId);
+        repository.delete(home);
     }
 
     private Home findHome(UUID homeId, UUID userId) {
@@ -64,5 +71,9 @@ public class HomeManagementService {
     private void checkOwnership(Home home, UUID userId) {
         // TODO: Implement when roles will be ready
         return;
+    }
+
+    private void checkRequiredRole(Home home, UUID userId) {
+        // TODO: Implement when roles will be ready
     }
 }
