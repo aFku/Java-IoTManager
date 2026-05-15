@@ -24,6 +24,7 @@ public class Device {
     @Column(nullable = false, length = 100)
     private String name;
 
+    @NotNull
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private DeviceType deviceType;

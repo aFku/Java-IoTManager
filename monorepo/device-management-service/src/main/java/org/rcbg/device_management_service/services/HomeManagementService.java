@@ -20,35 +20,37 @@ public class HomeManagementService {
 
     @Autowired
     private HomeRepository repository;
+    @Autowired
+    private HomeMapper homeMapper;
 
     public ResponseHomeDto getHome(UUID homeId, UUID userId) {
         Home home = findHome(homeId, userId);
         checkOwnership(home, userId);
-        return HomeMapper.INSTANCE.toDto(home);
+        return homeMapper.toDto(home);
     }
 
     // TODO: Add pagination
     // TODO: Filter out homes that user is not member of.
     public List<ResponseHomeDto> getListOfHomes(UUID userId) {
-        return repository.findAll().stream().map(HomeMapper.INSTANCE::toDto).toList();
+        return repository.findAll().stream().map(homeMapper::toDto).toList();
     }
 
     @Transactional
     public ResponseHomeDto createHome(RequestHomeDto dto, UUID userId) {
         log.info("Creating new home object for user: {}", userId);
-        Home home = HomeMapper.INSTANCE.toEntity(dto);
+        Home home = homeMapper.toEntity(dto);
         Home dbResult = repository.save(home);
         repository.flush();
         log.info("New home: {} created for user: {}", dbResult.getHomeId(), userId);
-        return HomeMapper.INSTANCE.toDto(dbResult);
+        return homeMapper.toDto(dbResult);
     }
 
     @Transactional
     public ResponseHomeDto updateHome(UUID homeId, UUID userId, RequestHomeDto dto) {
         Home home = findHome(homeId, userId);
         checkOwnership(home, userId);
-        HomeMapper.INSTANCE.updateHomeFromDto(dto, home);
-        return HomeMapper.INSTANCE.toDto(home);
+        homeMapper.updateHomeFromDto(dto, home);
+        return homeMapper.toDto(home);
     }
 
     @Transactional

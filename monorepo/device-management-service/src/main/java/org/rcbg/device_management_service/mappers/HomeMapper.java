@@ -9,14 +9,14 @@ import org.rcbg.device_management_service.models.dto.homes.RequestHomeDto;
 import org.rcbg.device_management_service.models.dto.homes.ResponseHomeDto;
 import org.rcbg.device_management_service.models.entities.Home;
 
-@Mapper
+@Mapper(
+        componentModel = "spring",
+        nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE
+)
 public interface HomeMapper {
-
-    HomeMapper INSTANCE = Mappers.getMapper(HomeMapper.class);
 
     public Home toEntity(RequestHomeDto dto);
     public ResponseHomeDto toDto(Home entity);
 
-    @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     public void updateHomeFromDto(RequestHomeDto dto, @MappingTarget Home home);
 }

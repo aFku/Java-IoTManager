@@ -2,6 +2,7 @@ package org.rcbg.device_management_service.services;
 
 import lombok.extern.slf4j.Slf4j;
 import org.rcbg.device_management_service.enums.DeviceManagementOperations;
+import org.rcbg.device_management_service.mappers.DeviceMapper;
 import org.rcbg.device_management_service.models.entities.Device;
 import org.rcbg.device_management_service.repositories.DeviceRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,6 +16,8 @@ public class DeviceManagementService {
 
     @Autowired
     private DeviceRepository repository;
+    @Autowired
+    private DeviceMapper deviceMapper;
 
     public void getDevice(UUID homeId, UUID deviceId) {
         return;
