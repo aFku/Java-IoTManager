@@ -18,6 +18,8 @@ import java.util.UUID;
 @Service
 public class HomeManagementService {
 
+    // TODO: Add more logs
+
     @Autowired
     private HomeRepository repository;
     @Autowired

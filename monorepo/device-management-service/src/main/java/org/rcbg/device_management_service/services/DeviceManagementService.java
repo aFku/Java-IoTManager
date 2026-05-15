@@ -14,11 +14,14 @@ import org.rcbg.device_management_service.repositories.DeviceRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.UUID;
 
 @Slf4j
 @Service
 public class DeviceManagementService {
+
+    // TODO: Add logs
 
     @Autowired
     private DeviceRepository repository;
@@ -33,8 +36,10 @@ public class DeviceManagementService {
         );
     }
 
-    public void getListOfDevices(UUID homeId) {
-        return;
+    // TODO: Add pagination
+    public List<ResponseDeviceDto> getListOfDevices(UUID homeId, UUID userId) {
+        Home home = findHome(homeId, userId);
+        return repository.findAllByHome(home).stream().map(deviceMapper::toDto).toList();
     }
 
     @Transactional
@@ -47,11 +52,17 @@ public class DeviceManagementService {
         return deviceMapper.toDtoWithSecret(dbResult);
     }
 
-    public void updateDevice(UUID homeId, UUID deviceId) {
-        return;
+    @Transactional
+    public ResponseDeviceDto updateDevice(UUID homeId, UUID userId, UUID deviceId, RequestDeviceDto dto) {
+        Device device = findDevice(homeId, userId, deviceId);
+        deviceMapper.updateDeviceFromDto(dto, device);
+        return deviceMapper.toDto(device);
     }
 
-    public void deleteDevice(UUID homeId, UUID deviceId) {
+    @Transactional
+    public void deleteDevice(UUID homeId, UUID userId, UUID deviceId) {
+        Device device = findDevice(homeId, userId, deviceId);
+        repository.delete(device);
         return;
     }
 
@@ -67,6 +78,7 @@ public class DeviceManagementService {
         return false;
     }
 
+    // TODO: Refactor ownership and device management permissions when roles are ready
     private boolean checkIfUserHasAccess(Device device, String userId, DeviceManagementOperations operations) {
         return false;
     }
