@@ -7,6 +7,7 @@ import org.mapstruct.NullValuePropertyMappingStrategy;
 import org.mapstruct.factory.Mappers;
 import org.rcbg.device_management_service.models.dto.devices.RequestDeviceDto;
 import org.rcbg.device_management_service.models.dto.devices.ResponseDeviceDto;
+import org.rcbg.device_management_service.models.dto.devices.ResponseDeviceWithSecretDto;
 import org.rcbg.device_management_service.models.entities.Device;
 import org.rcbg.device_management_service.models.entities.Home;
 
@@ -17,10 +18,14 @@ import org.rcbg.device_management_service.models.entities.Home;
 public interface DeviceMapper {
 
     @Mapping(source = "device.home.homeId", target = "homeId")
+    public ResponseDeviceWithSecretDto toDtoWithSecret(Device device);
+
+    @Mapping(source = "device.home.homeId", target = "homeId")
     public ResponseDeviceDto toDto(Device device);
 
-    @Mapping(target = "home", source = "home")
-    @Mapping(target = "secret", source = "secret")
+    @Mapping(source = "secret", target = "secret")
+    @Mapping(source = "home", target = "home")
+    @Mapping(source = "dto.name", target = "name")
     public Device toEntity(RequestDeviceDto dto, String secret, Home home);
 
     public void updateDeviceFromDto(RequestDeviceDto dto, @MappingTarget Device device);

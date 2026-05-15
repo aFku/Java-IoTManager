@@ -32,8 +32,4 @@ public class RequestDeviceDto {
     @NotNull(message = "Device type is required", groups = CreateGroup.class)
     // TODO: Custom message in error response if incorrect value provided in request
     DeviceType deviceType;
-
-    @NotNull(message = "Home ID is required", groups = CreateGroup.class)
-    @Null(message = "You cannot change Home ID with update request", groups = UpdateGroup.class)
-    UUID homeId;
 }

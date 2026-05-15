@@ -60,7 +60,7 @@ public class HomeManagementService {
         repository.delete(home);
     }
 
-    private Home findHome(UUID homeId, UUID userId) {
+    public Home findHome(UUID homeId, UUID userId) {
         return repository.findById(homeId).orElseThrow(
                 () -> new ObjectDoesNotExistException(
                         String.format("Home object with ID: %s does not exists", homeId),
@@ -70,12 +70,12 @@ public class HomeManagementService {
 
     }
 
-    private void checkOwnership(Home home, UUID userId) {
+    public void checkOwnership(Home home, UUID userId) {
         // TODO: Implement when roles will be ready
         return;
     }
 
-    private void checkRequiredRole(Home home, UUID userId) {
+    public void checkRequiredRole(Home home, UUID userId) {
         // TODO: Implement when roles will be ready
     }
 }
