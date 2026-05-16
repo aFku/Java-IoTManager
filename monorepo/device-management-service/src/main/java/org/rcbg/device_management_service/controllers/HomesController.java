@@ -31,23 +31,30 @@ public class HomesController {
     // TODO: Add userId parameter once keycloak is setup
     @PostMapping
     public ResponseEntity<ResponseHomeDto> createNewHome(@Validated(CreateGroup.class) @RequestBody RequestHomeDto requestDto) {
-        ResponseHomeDto responseDto = homeManagementService.createHome(requestDto, UUID.randomUUID());
+        ResponseHomeDto responseDto = homeManagementService.createHome(
+                requestDto,
+                UUID.randomUUID()
+        );
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(responseDto);
     }
 
     @GetMapping("/{homeId}")
-    public ResponseEntity<ResponseHomeDto> getHomeByHomeId(@PathVariable String homeId) {
-        ResponseHomeDto responseDto = homeManagementService.getHome(UUID.fromString(homeId), UUID.randomUUID());
+    public ResponseEntity<ResponseHomeDto> getHomeByHomeId(@PathVariable UUID homeId) {
+        ResponseHomeDto responseDto = homeManagementService.getHome(
+                homeId,
+                UUID.randomUUID()
+        );
         return ResponseEntity
                 .status(HttpStatus.OK)
                 .body(responseDto);
     }
 
     @PatchMapping("/{homeId}")
-    public ResponseEntity<ResponseHomeDto> patchHomeByHomeId(@PathVariable String homeId, @RequestBody RequestHomeDto updateContent) {
-        ResponseHomeDto responseHomeDto = homeManagementService.updateHome(UUID.fromString(homeId),
+    public ResponseEntity<ResponseHomeDto> patchHomeByHomeId(@PathVariable UUID homeId, @RequestBody RequestHomeDto updateContent) {
+        ResponseHomeDto responseHomeDto = homeManagementService.updateHome(
+                homeId,
                 UUID.randomUUID(),
                 updateContent);
         return ResponseEntity
@@ -57,8 +64,11 @@ public class HomesController {
     }
 
     @DeleteMapping("/{homeId}")
-    public ResponseEntity<Void> deleteHomeByHomeId(@PathVariable String homeId) {
-        homeManagementService.deleteHome(UUID.fromString(homeId), UUID.randomUUID());
+    public ResponseEntity<Void> deleteHomeByHomeId(@PathVariable UUID homeId) {
+        homeManagementService.deleteHome(
+                homeId,
+                UUID.randomUUID()
+        );
         return ResponseEntity
                 .status(HttpStatus.NO_CONTENT)
                 .build();

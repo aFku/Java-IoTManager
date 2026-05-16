@@ -38,4 +38,5 @@ public class GeneralControllerAdvice {
         return new ResponseEntity<>(problemDetail, new HttpHeaders(), HttpStatus.NOT_FOUND);
     }
 
+    // TODO: Add handler for incorrect query / body type
 }

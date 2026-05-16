@@ -3,10 +3,12 @@ package org.rcbg.device_management_service.controllers;
 import org.rcbg.device_management_service.models.dto.devices.RequestDeviceDto;
 import org.rcbg.device_management_service.models.dto.devices.ResponseDeviceDto;
 import org.rcbg.device_management_service.models.dto.devices.ResponseDeviceWithSecretDto;
+import org.rcbg.device_management_service.models.dto.devices.ResponseSecretDto;
 import org.rcbg.device_management_service.services.DeviceManagementService;
 import org.rcbg.device_management_service.validators.groups.CreateGroup;
 import org.rcbg.device_management_service.validators.groups.UpdateGroup;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
@@ -24,16 +26,19 @@ public class DevicesController {
     private DeviceManagementService deviceManagementService;
 
     @GetMapping
-    ResponseEntity<List<ResponseDeviceDto>> getAllDevicesByHomeId(@PathVariable String homeId) {
+    ResponseEntity<List<ResponseDeviceDto>> getAllDevicesByHomeId(@PathVariable UUID homeId) {
         return ResponseEntity
                 .status(HttpStatus.OK)
-                .body(deviceManagementService.getListOfDevices(UUID.fromString(homeId), UUID.randomUUID()));
+                .body(deviceManagementService.getListOfDevices(
+                        homeId,
+                        UUID.randomUUID()
+                ));
     }
 
     @PostMapping
-    ResponseEntity<ResponseDeviceWithSecretDto> createNewDevice(@PathVariable String homeId, @Validated(CreateGroup.class) @RequestBody RequestDeviceDto requestDto) {
+    ResponseEntity<ResponseDeviceWithSecretDto> createNewDevice(@PathVariable UUID homeId, @Validated(CreateGroup.class) @RequestBody RequestDeviceDto requestDto) {
         ResponseDeviceWithSecretDto responseDeviceWithSecretDto = deviceManagementService.createDevice(
-                UUID.fromString(homeId),
+                homeId,
                 UUID.randomUUID(),
                 requestDto
         );
@@ -43,11 +48,11 @@ public class DevicesController {
     }
 
     @GetMapping("/{deviceId}")
-    ResponseEntity<ResponseDeviceDto> getDeviceByDeviceId(@PathVariable String homeId, @PathVariable String deviceId) {
+    ResponseEntity<ResponseDeviceDto> getDeviceByDeviceId(@PathVariable UUID homeId, @PathVariable UUID deviceId) {
         ResponseDeviceDto responseDto = deviceManagementService.getDevice(
-                UUID.fromString(homeId),
+                homeId,
                 UUID.randomUUID(),
-                UUID.fromString(deviceId)
+                deviceId
         );
         return ResponseEntity
                 .status(HttpStatus.OK)
@@ -55,18 +60,23 @@ public class DevicesController {
     }
 
     @PatchMapping("/{deviceId}")
-    ResponseEntity<ResponseDeviceDto> patchDeviceByDeviceID(@PathVariable String homeId, @PathVariable String deviceId, @Validated(UpdateGroup.class) @RequestBody RequestDeviceDto updateContent) {
+    ResponseEntity<ResponseDeviceDto> patchDeviceByDeviceID(@PathVariable UUID homeId, @PathVariable UUID deviceId, @Validated(UpdateGroup.class) @RequestBody RequestDeviceDto updateContent) {
         return ResponseEntity
                 .status(HttpStatus.OK)
-                .body(deviceManagementService.updateDevice(UUID.fromString(homeId), UUID.randomUUID(), UUID.fromString(deviceId), updateContent));
+                .body(deviceManagementService.updateDevice(
+                        homeId,
+                        UUID.randomUUID(),
+                        deviceId,
+                        updateContent)
+                );
     }
 
     @DeleteMapping("/{deviceId}")
-    ResponseEntity<Void> deleteDeviceByDeviceId(@PathVariable String homeId, @PathVariable String deviceId) {
+    ResponseEntity<Void> deleteDeviceByDeviceId(@PathVariable UUID homeId, @PathVariable UUID deviceId) {
         deviceManagementService.deleteDevice(
-                UUID.fromString(homeId),
+                homeId,
                 UUID.randomUUID(),
-                UUID.fromString(deviceId)
+                deviceId
         );
         return ResponseEntity
                 .status(HttpStatus.NO_CONTENT)
@@ -74,12 +84,27 @@ public class DevicesController {
     }
 
     @PostMapping("/{deviceId}/secret")
-    String generateSecretForDeviceId(@PathVariable String homeId, @PathVariable String deviceId) {
-        return "Not Implemented";
+    ResponseEntity<ResponseSecretDto> generateSecretForDeviceId(@PathVariable UUID homeId, @PathVariable UUID deviceId) {
+        ResponseSecretDto responseDto = deviceManagementService.refreshDeviceSecret(
+                homeId,
+                UUID.randomUUID(),
+                deviceId
+        );
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(responseDto);
     }
 
-    @PostMapping("/{deviceId}/move")
-    String moveDeviceToTargetHomeId(@PathVariable String homeId, @PathVariable String deviceId, @RequestBody String targetHomeId) {
-        return "Not Implemented";
+    @PutMapping("/{deviceId}/move")
+    ResponseEntity<ResponseDeviceDto> moveDeviceToTargetHomeId(@PathVariable UUID homeId, @PathVariable UUID deviceId, @RequestParam(value = "target", required = true) UUID targetHomeId) {
+        ResponseDeviceDto responseDto = deviceManagementService.moveDeviceToTargetHome(
+                homeId,
+                UUID.randomUUID(),
+                deviceId,
+                targetHomeId
+        );
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(responseDto);
     }
 }

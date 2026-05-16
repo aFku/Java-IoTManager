@@ -8,6 +8,7 @@ import org.rcbg.device_management_service.mappers.DeviceMapper;
 import org.rcbg.device_management_service.models.dto.devices.RequestDeviceDto;
 import org.rcbg.device_management_service.models.dto.devices.ResponseDeviceDto;
 import org.rcbg.device_management_service.models.dto.devices.ResponseDeviceWithSecretDto;
+import org.rcbg.device_management_service.models.dto.devices.ResponseSecretDto;
 import org.rcbg.device_management_service.models.entities.Device;
 import org.rcbg.device_management_service.models.entities.Home;
 import org.rcbg.device_management_service.repositories.DeviceRepository;
@@ -66,16 +67,25 @@ public class DeviceManagementService {
         return;
     }
 
-    public void refreshDeviceSecret(UUID homeId, UUID deviceId) {
-        return;
+    @Transactional
+    public ResponseSecretDto refreshDeviceSecret(UUID homeId, UUID userId, UUID deviceId) {
+        Device device = findDevice(homeId, userId, deviceId);
+        String secret = UUID.randomUUID().toString().replace("-", "");
+        device.setSecret(secret);
+        Device dbResult = repository.save(device);
+        return new ResponseSecretDto(dbResult.getSecret());
     }
 
-    public void moveDeviceToTargetHome(UUID homeId, UUID deviceId, UUID targetHomeId) {
-        return;
-    }
-
-    private boolean findDeviceByHomeIdAndDeviceId(UUID homeId, UUID deviceId) {
-        return false;
+    @Transactional
+    public ResponseDeviceDto moveDeviceToTargetHome(UUID homeId, UUID userId, UUID deviceId, UUID targetHomeId) {
+        Device device = findDevice(homeId, userId, deviceId);
+        // TODO: Check if user can move device from source
+        Home targetHome = findHome(targetHomeId,userId);
+        // TODO: Check if user can add device to given targetHome
+        device.setHome(targetHome);
+        Device dbResult = repository.save(device);
+        repository.flush();
+        return deviceMapper.toDto(dbResult);
     }
 
     // TODO: Refactor ownership and device management permissions when roles are ready
