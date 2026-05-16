@@ -1,0 +1,47 @@
+version: '3.9'
+
+services:
+  some-postgres:
+    image: postgres:latest
+    container_name: some-postgres
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+    volumes:
+      - "./postgresql/init.sql:/docker-entrypoint-initdb.d/init.sql"
+    networks:
+      - shared-network
+
+  iot-keycloak:
+    image: quay.io/keycloak/keycloak:latest
+    container_name: iot-keycloak
+    depends_on:
+      - some-postgres
+    command:
+      - start-dev
+      - --import-realm
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: admin
+      KC_HEALTH_ENABLED: "true"
+      KC_METRICS_ENABLED: "true"
+
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://some-postgres:5432/keycloak
+      KC_DB_USERNAME: user
+      KC_DB_PASSWORD: password
+
+      KC_HOSTNAME: localhost
+    ports:
+      - "8081:8080"
+      - "9000:9000"
+    volumes:
+      - "./keycloak/realms:/opt/keycloak/data/import"
+    networks:
+      - shared-network
+
+networks:
+  shared-network:
+    driver: bridge
