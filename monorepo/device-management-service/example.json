@@ -1,0 +1,36 @@
+{
+  "exp": 1779018125,
+  "iat": 1779017825,
+  "jti": "onrtro:7f047531-8129-7482-f7b5-964a3b7e98e8",
+  "iss": "http://localhost:8081/realms/IoTManager",
+  "aud": [
+    "example-service-c",
+    "example-service-a",
+    "example-service-b",
+    "device-management-service"
+  ],
+  "sub": "14d25eae-c3ec-45c2-9283-d740b5e0440d",
+  "typ": "Bearer",
+  "azp": "login-service",
+  "sid": "dd6fe06a-89ee-a2a2-2067-b419d67588cf",
+  "acr": "1",
+  "allowed-origins": [
+    "http://localhost:8080"
+  ],
+  "resource_access": {
+    "device-management-service": {
+      "roles": [
+        "device-management-write",
+        "device-management-read",
+        "device-management-admin"
+      ]
+    }
+  },
+  "scope": "openid iot-manager-client-scope email profile",
+  "email_verified": true,
+  "name": "test user",
+  "preferred_username": "testuser1",
+  "given_name": "test",
+  "family_name": "user",
+  "email": "testuser1@example.com"
+}
