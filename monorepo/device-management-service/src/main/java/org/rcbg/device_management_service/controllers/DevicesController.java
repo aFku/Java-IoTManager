@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -26,20 +27,20 @@ public class DevicesController {
     private DeviceManagementService deviceManagementService;
 
     @GetMapping
-    ResponseEntity<List<ResponseDeviceDto>> getAllDevicesByHomeId(@PathVariable UUID homeId) {
+    ResponseEntity<List<ResponseDeviceDto>> getAllDevicesByHomeId(@PathVariable UUID homeId, Authentication auth) {
         return ResponseEntity
                 .status(HttpStatus.OK)
                 .body(deviceManagementService.getListOfDevices(
                         homeId,
-                        UUID.randomUUID()
+                        UUID.fromString(auth.getName())
                 ));
     }
 
     @PostMapping
-    ResponseEntity<ResponseDeviceWithSecretDto> createNewDevice(@PathVariable UUID homeId, @Validated(CreateGroup.class) @RequestBody RequestDeviceDto requestDto) {
+    ResponseEntity<ResponseDeviceWithSecretDto> createNewDevice(@PathVariable UUID homeId, @Validated(CreateGroup.class) @RequestBody RequestDeviceDto requestDto, Authentication auth) {
         ResponseDeviceWithSecretDto responseDeviceWithSecretDto = deviceManagementService.createDevice(
                 homeId,
-                UUID.randomUUID(),
+                UUID.fromString(auth.getName()),
                 requestDto
         );
         return ResponseEntity
@@ -48,10 +49,10 @@ public class DevicesController {
     }
 
     @GetMapping("/{deviceId}")
-    ResponseEntity<ResponseDeviceDto> getDeviceByDeviceId(@PathVariable UUID homeId, @PathVariable UUID deviceId) {
+    ResponseEntity<ResponseDeviceDto> getDeviceByDeviceId(@PathVariable UUID homeId, @PathVariable UUID deviceId, Authentication auth) {
         ResponseDeviceDto responseDto = deviceManagementService.getDevice(
                 homeId,
-                UUID.randomUUID(),
+                UUID.fromString(auth.getName()),
                 deviceId
         );
         return ResponseEntity
@@ -60,22 +61,22 @@ public class DevicesController {
     }
 
     @PatchMapping("/{deviceId}")
-    ResponseEntity<ResponseDeviceDto> patchDeviceByDeviceID(@PathVariable UUID homeId, @PathVariable UUID deviceId, @Validated(UpdateGroup.class) @RequestBody RequestDeviceDto updateContent) {
+    ResponseEntity<ResponseDeviceDto> patchDeviceByDeviceID(@PathVariable UUID homeId, @PathVariable UUID deviceId, @Validated(UpdateGroup.class) @RequestBody RequestDeviceDto updateContent, Authentication auth) {
         return ResponseEntity
                 .status(HttpStatus.OK)
                 .body(deviceManagementService.updateDevice(
                         homeId,
-                        UUID.randomUUID(),
+                        UUID.fromString(auth.getName()),
                         deviceId,
                         updateContent)
                 );
     }
 
     @DeleteMapping("/{deviceId}")
-    ResponseEntity<Void> deleteDeviceByDeviceId(@PathVariable UUID homeId, @PathVariable UUID deviceId) {
+    ResponseEntity<Void> deleteDeviceByDeviceId(@PathVariable UUID homeId, @PathVariable UUID deviceId, Authentication auth) {
         deviceManagementService.deleteDevice(
                 homeId,
-                UUID.randomUUID(),
+                UUID.fromString(auth.getName()),
                 deviceId
         );
         return ResponseEntity
@@ -84,10 +85,10 @@ public class DevicesController {
     }
 
     @PostMapping("/{deviceId}/secret")
-    ResponseEntity<ResponseSecretDto> generateSecretForDeviceId(@PathVariable UUID homeId, @PathVariable UUID deviceId) {
+    ResponseEntity<ResponseSecretDto> generateSecretForDeviceId(@PathVariable UUID homeId, @PathVariable UUID deviceId, Authentication auth) {
         ResponseSecretDto responseDto = deviceManagementService.refreshDeviceSecret(
                 homeId,
-                UUID.randomUUID(),
+                UUID.fromString(auth.getName()),
                 deviceId
         );
         return ResponseEntity
@@ -96,10 +97,10 @@ public class DevicesController {
     }
 
     @PutMapping("/{deviceId}/move")
-    ResponseEntity<ResponseDeviceDto> moveDeviceToTargetHomeId(@PathVariable UUID homeId, @PathVariable UUID deviceId, @RequestParam(value = "target", required = true) UUID targetHomeId) {
+    ResponseEntity<ResponseDeviceDto> moveDeviceToTargetHomeId(@PathVariable UUID homeId, @PathVariable UUID deviceId, @RequestParam(value = "target", required = true) UUID targetHomeId, Authentication auth) {
         ResponseDeviceDto responseDto = deviceManagementService.moveDeviceToTargetHome(
                 homeId,
-                UUID.randomUUID(),
+                UUID.fromString(auth.getName()),
                 deviceId,
                 targetHomeId
         );
