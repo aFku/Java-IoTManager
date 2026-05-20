@@ -23,6 +23,7 @@ public class HomesController {
     private HomeManagementService homeManagementService;
 
     @GetMapping
+    @PreAuthorize("hasRole('HOME_READ')")
     public ResponseEntity<List<ResponseHomeDto>> getAllAvailableHomes(Authentication auth) {
         List<ResponseHomeDto> responseDtoList = homeManagementService.getListOfHomes(UUID.fromString(auth.getName()));
         return ResponseEntity
@@ -31,6 +32,7 @@ public class HomesController {
     }
 
     @PostMapping
+    @PreAuthorize("hasRole('HOME_WRITE')")
     public ResponseEntity<ResponseHomeDto> createNewHome(@Validated(CreateGroup.class) @RequestBody RequestHomeDto requestDto, Authentication auth) {
         ResponseHomeDto responseDto = homeManagementService.createHome(
                 requestDto,
@@ -42,6 +44,7 @@ public class HomesController {
     }
 
     @GetMapping("/{homeId}")
+    @PreAuthorize("hasRole('HOME_READ')")
     public ResponseEntity<ResponseHomeDto> getHomeByHomeId(@PathVariable UUID homeId, Authentication auth) {
         ResponseHomeDto responseDto = homeManagementService.getHome(
                 homeId,
@@ -53,6 +56,7 @@ public class HomesController {
     }
 
     @PatchMapping("/{homeId}")
+    @PreAuthorize("hasRole('HOME_WRITE')")
     public ResponseEntity<ResponseHomeDto> patchHomeByHomeId(@PathVariable UUID homeId, @RequestBody RequestHomeDto updateContent, Authentication auth) {
         ResponseHomeDto responseHomeDto = homeManagementService.updateHome(
                 homeId,
@@ -65,6 +69,7 @@ public class HomesController {
     }
 
     @DeleteMapping("/{homeId}")
+    @PreAuthorize("hasRole('HOME_WRITE')")
     public ResponseEntity<Void> deleteHomeByHomeId(@PathVariable UUID homeId, Authentication auth) {
         homeManagementService.deleteHome(
                 homeId,

@@ -8,14 +8,13 @@ import org.rcbg.device_management_service.services.DeviceManagementService;
 import org.rcbg.device_management_service.validators.groups.CreateGroup;
 import org.rcbg.device_management_service.validators.groups.UpdateGroup;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.jpa.repository.Query;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -27,6 +26,7 @@ public class DevicesController {
     private DeviceManagementService deviceManagementService;
 
     @GetMapping
+    @PreAuthorize("hasRole('DEVICE_READ')")
     ResponseEntity<List<ResponseDeviceDto>> getAllDevicesByHomeId(@PathVariable UUID homeId, Authentication auth) {
         return ResponseEntity
                 .status(HttpStatus.OK)
@@ -37,6 +37,7 @@ public class DevicesController {
     }
 
     @PostMapping
+    @PreAuthorize("hasRole('DEVICE_WRITE')")
     ResponseEntity<ResponseDeviceWithSecretDto> createNewDevice(@PathVariable UUID homeId, @Validated(CreateGroup.class) @RequestBody RequestDeviceDto requestDto, Authentication auth) {
         ResponseDeviceWithSecretDto responseDeviceWithSecretDto = deviceManagementService.createDevice(
                 homeId,
@@ -49,6 +50,7 @@ public class DevicesController {
     }
 
     @GetMapping("/{deviceId}")
+    @PreAuthorize("hasRole('DEVICE_READ')")
     ResponseEntity<ResponseDeviceDto> getDeviceByDeviceId(@PathVariable UUID homeId, @PathVariable UUID deviceId, Authentication auth) {
         ResponseDeviceDto responseDto = deviceManagementService.getDevice(
                 homeId,
@@ -61,6 +63,7 @@ public class DevicesController {
     }
 
     @PatchMapping("/{deviceId}")
+    @PreAuthorize("hasRole('DEVICE_WRITE')")
     ResponseEntity<ResponseDeviceDto> patchDeviceByDeviceID(@PathVariable UUID homeId, @PathVariable UUID deviceId, @Validated(UpdateGroup.class) @RequestBody RequestDeviceDto updateContent, Authentication auth) {
         return ResponseEntity
                 .status(HttpStatus.OK)
@@ -73,6 +76,7 @@ public class DevicesController {
     }
 
     @DeleteMapping("/{deviceId}")
+    @PreAuthorize("hasRole('DEVICE_WRITE')")
     ResponseEntity<Void> deleteDeviceByDeviceId(@PathVariable UUID homeId, @PathVariable UUID deviceId, Authentication auth) {
         deviceManagementService.deleteDevice(
                 homeId,
@@ -85,6 +89,7 @@ public class DevicesController {
     }
 
     @PostMapping("/{deviceId}/secret")
+    @PreAuthorize("hasRole('DEVICE_WRITE')")
     ResponseEntity<ResponseSecretDto> generateSecretForDeviceId(@PathVariable UUID homeId, @PathVariable UUID deviceId, Authentication auth) {
         ResponseSecretDto responseDto = deviceManagementService.refreshDeviceSecret(
                 homeId,
@@ -97,6 +102,7 @@ public class DevicesController {
     }
 
     @PutMapping("/{deviceId}/move")
+    @PreAuthorize("hasRole('DEVICE_WRITE')")
     ResponseEntity<ResponseDeviceDto> moveDeviceToTargetHomeId(@PathVariable UUID homeId, @PathVariable UUID deviceId, @RequestParam(value = "target", required = true) UUID targetHomeId, Authentication auth) {
         ResponseDeviceDto responseDto = deviceManagementService.moveDeviceToTargetHome(
                 homeId,
