@@ -2,7 +2,6 @@ package org.rcbg.device_management_service.services;
 
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
-import org.rcbg.device_management_service.enums.DeviceManagementOperations;
 import org.rcbg.device_management_service.exceptions.ObjectDoesNotExistException;
 import org.rcbg.device_management_service.mappers.DeviceMapper;
 import org.rcbg.device_management_service.models.dto.devices.RequestDeviceDto;
@@ -89,7 +88,7 @@ public class DeviceManagementService {
     }
 
     // TODO: Refactor ownership and device management permissions when roles are ready
-    private boolean checkIfUserHasAccess(Device device, String userId, DeviceManagementOperations operations) {
+    private boolean checkIfUserHasAccess(Device device, String userId) {
         return false;
     }
 

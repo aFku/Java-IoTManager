@@ -1,6 +1,7 @@
 package org.rcbg.device_management_service.controllers;
 
 import lombok.extern.slf4j.Slf4j;
+import org.rcbg.device_management_service.exceptions.AccessDeniedException;
 import org.rcbg.device_management_service.exceptions.ObjectDoesNotExistException;
 import org.rcbg.device_management_service.models.dto.errors.StandardProblemDetail;
 import org.springframework.http.HttpHeaders;
@@ -36,6 +37,17 @@ public class GeneralControllerAdvice {
         problemDetail.setDetail(ex.getMessage());
         log.error("Cannot find object: {}, userId: {}", problemDetail.getDetail(), ex.getUserId());
         return new ResponseEntity<>(problemDetail, new HttpHeaders(), HttpStatus.NOT_FOUND);
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<StandardProblemDetail> handleAccessDeniedException(ObjectDoesNotExistException ex) {
+        StandardProblemDetail problemDetail = new StandardProblemDetail();
+        problemDetail.setStatus(HttpStatus.FORBIDDEN.value());
+        problemDetail.setType("access-denied");
+        problemDetail.setTitle("User does not have access");
+        problemDetail.setDetail(ex.getMessage());
+        log.error(ex.getMessage());
+        return new ResponseEntity<>(problemDetail, new HttpHeaders(), HttpStatus.FORBIDDEN);
     }
 
     // TODO: Add handler for incorrect query / body type
