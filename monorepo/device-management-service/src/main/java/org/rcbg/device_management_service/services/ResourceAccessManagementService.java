@@ -116,7 +116,7 @@ public class ResourceAccessManagementService {
     }
 
     public MembersGetResponseDto getMembersByHome(Home home) {
-        List<HomeAccess> result = repository.findAllByHomeId(home.getHomeId());
+        List<HomeAccess> result = repository.findAllByHome_HomeId(home.getHomeId());
         return new MembersGetResponseDto(
                 result.stream().map(access ->
                         new RoleGetResponseDto(access.getUserId(), access.getRole()))

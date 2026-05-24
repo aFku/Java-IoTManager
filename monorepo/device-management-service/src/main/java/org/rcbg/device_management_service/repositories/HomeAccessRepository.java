@@ -17,7 +17,7 @@ import java.util.UUID;
 public interface HomeAccessRepository extends JpaRepository<HomeAccess, Integer> {
     Optional<HomeAccess> findByHomeAndUserId(Home home, UUID userId);
     List<HomeAccess> findByHome_HomeIdAndUserIdIn(UUID homeId, Set<UUID> users);
-    List<HomeAccess> findAllByHomeId(UUID homeId);
+    List<HomeAccess> findAllByHome_HomeId(UUID homeId);
 
     @Modifying
     @Query("""
