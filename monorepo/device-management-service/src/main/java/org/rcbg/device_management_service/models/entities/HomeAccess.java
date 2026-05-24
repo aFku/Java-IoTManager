@@ -14,6 +14,7 @@ import java.util.UUID;
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
+@Table(name = "home_access")
 public class HomeAccess {
 
     @Id

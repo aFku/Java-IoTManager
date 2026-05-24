@@ -27,6 +27,6 @@ public class Home {
     @OneToMany(mappedBy = "home", fetch = FetchType.LAZY)
     private List<Device> devices;
 
-    // TODO: Add roles for Homes and users in v2
-    // TODO: Roles Validation
+    @OneToMany(mappedBy = "home")
+    private List<HomeAccess> accesses;
 }

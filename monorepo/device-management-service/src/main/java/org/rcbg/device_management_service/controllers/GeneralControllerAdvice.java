@@ -2,6 +2,7 @@ package org.rcbg.device_management_service.controllers;
 
 import lombok.extern.slf4j.Slf4j;
 import org.rcbg.device_management_service.exceptions.AccessDeniedException;
+import org.rcbg.device_management_service.exceptions.InvalidMembersRequestException;
 import org.rcbg.device_management_service.exceptions.ObjectDoesNotExistException;
 import org.rcbg.device_management_service.models.dto.errors.StandardProblemDetail;
 import org.springframework.http.HttpHeaders;
@@ -40,7 +41,7 @@ public class GeneralControllerAdvice {
     }
 
     @ExceptionHandler(AccessDeniedException.class)
-    public ResponseEntity<StandardProblemDetail> handleAccessDeniedException(ObjectDoesNotExistException ex) {
+    public ResponseEntity<StandardProblemDetail> handleAccessDeniedException(AccessDeniedException ex) {
         StandardProblemDetail problemDetail = new StandardProblemDetail();
         problemDetail.setStatus(HttpStatus.FORBIDDEN.value());
         problemDetail.setType("access-denied");
@@ -50,5 +51,15 @@ public class GeneralControllerAdvice {
         return new ResponseEntity<>(problemDetail, new HttpHeaders(), HttpStatus.FORBIDDEN);
     }
 
+    @ExceptionHandler(InvalidMembersRequestException.class)
+    public ResponseEntity<StandardProblemDetail> handleInvalidMembersRequestException(InvalidMembersRequestException ex) {
+        StandardProblemDetail problemDetail = new StandardProblemDetail();
+        problemDetail.setStatus(HttpStatus.BAD_REQUEST.value());
+        problemDetail.setType("bad-request");
+        problemDetail.setTitle("Incorrect request body");
+        problemDetail.setDetail(ex.getMessage());
+        log.error("User: {} - Members request issue: {}", ex.getUserId(), problemDetail.getDetail());
+        return new ResponseEntity<>(problemDetail, new HttpHeaders(), HttpStatus.BAD_REQUEST);
+    }
     // TODO: Add handler for incorrect query / body type
 }

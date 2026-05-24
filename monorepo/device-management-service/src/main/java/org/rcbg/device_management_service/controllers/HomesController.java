@@ -1,5 +1,8 @@
 package org.rcbg.device_management_service.controllers;
 
+import org.rcbg.device_management_service.models.dto.home_access.MembersGetResponseDto;
+import org.rcbg.device_management_service.models.dto.home_access.MembersPostRequestDto;
+import org.rcbg.device_management_service.models.dto.home_access.MembersPostResponseDto;
 import org.rcbg.device_management_service.models.dto.homes.RequestHomeDto;
 import org.rcbg.device_management_service.models.dto.homes.ResponseHomeDto;
 import org.rcbg.device_management_service.services.HomeManagementService;
@@ -78,5 +81,23 @@ public class HomesController {
         return ResponseEntity
                 .status(HttpStatus.NO_CONTENT)
                 .build();
+    }
+
+    @GetMapping("/{homeId}/members")
+    @PreAuthorize("hasRole('HOME_READ')")
+    public ResponseEntity<MembersGetResponseDto> getMembersList(@PathVariable UUID homeId, Authentication auth) {
+        MembersGetResponseDto responseDto = homeManagementService.getHomeMembers(homeId, UUID.fromString(auth.getName()));
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(responseDto);
+    }
+
+    @PostMapping("/{homeId}/members")
+    @PreAuthorize("hasRole('HOME_WRITE')")
+    public ResponseEntity<MembersPostResponseDto> updateMembersList(@PathVariable UUID homeId, @RequestBody MembersPostRequestDto requestDto, Authentication auth) {
+        MembersPostResponseDto responseDto = homeManagementService.updateHomeMembers(homeId, UUID.fromString(auth.getName()), requestDto);
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(responseDto);
     }
 }

@@ -2,8 +2,12 @@ package org.rcbg.device_management_service.services;
 
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
+import org.rcbg.device_management_service.enums.HomeAccessRole;
 import org.rcbg.device_management_service.exceptions.ObjectDoesNotExistException;
 import org.rcbg.device_management_service.mappers.HomeMapper;
+import org.rcbg.device_management_service.models.dto.home_access.MembersGetResponseDto;
+import org.rcbg.device_management_service.models.dto.home_access.MembersPostRequestDto;
+import org.rcbg.device_management_service.models.dto.home_access.MembersPostResponseDto;
 import org.rcbg.device_management_service.models.dto.homes.RequestHomeDto;
 import org.rcbg.device_management_service.models.dto.homes.ResponseHomeDto;
 import org.rcbg.device_management_service.models.entities.Home;
@@ -11,7 +15,9 @@ import org.rcbg.device_management_service.repositories.HomeRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @Slf4j
@@ -24,17 +30,18 @@ public class HomeManagementService {
     private HomeRepository repository;
     @Autowired
     private HomeMapper homeMapper;
+    @Autowired
+    private ResourceAccessManagementService resourceAccessManagementService;
 
     public ResponseHomeDto getHome(UUID homeId, UUID userId) {
         Home home = findHome(homeId, userId);
-        checkOwnership(home, userId);
+        checkOwnership(home, userId, HomeAccessRole.VIEWER);
         return homeMapper.toDto(home);
     }
 
     // TODO: Add pagination
-    // TODO: Filter out homes that user is not member of.
     public List<ResponseHomeDto> getListOfHomes(UUID userId) {
-        return repository.findAll().stream().map(homeMapper::toDto).toList();
+        return repository.findAllByUserId(userId).stream().map(homeMapper::toDto).toList();
     }
 
     @Transactional
@@ -43,6 +50,11 @@ public class HomeManagementService {
         Home home = homeMapper.toEntity(dto);
         Home dbResult = repository.save(home);
         repository.flush();
+        MembersPostRequestDto creatorAccessRequest = new MembersPostRequestDto();
+        creatorAccessRequest.setAdd(
+                Map.of(userId, HomeAccessRole.MANAGER)
+        );
+        resourceAccessManagementService.handleMembersPostRequest(creatorAccessRequest, home, userId);
         log.info("New home: {} created for user: {}", dbResult.getHomeId(), userId);
         return homeMapper.toDto(dbResult);
     }
@@ -50,7 +62,7 @@ public class HomeManagementService {
     @Transactional
     public ResponseHomeDto updateHome(UUID homeId, UUID userId, RequestHomeDto dto) {
         Home home = findHome(homeId, userId);
-        checkOwnership(home, userId);
+        checkOwnership(home, userId, HomeAccessRole.MANAGER);
         homeMapper.updateHomeFromDto(dto, home);
         return homeMapper.toDto(home);
     }
@@ -58,7 +70,7 @@ public class HomeManagementService {
     @Transactional
     public void deleteHome(UUID homeId, UUID userId) {
         Home home = findHome(homeId, userId);
-        checkOwnership(home, userId);
+        checkOwnership(home, userId, HomeAccessRole.MANAGER);
         repository.delete(home);
     }
 
@@ -72,12 +84,19 @@ public class HomeManagementService {
 
     }
 
-    public void checkOwnership(Home home, UUID userId) {
-        // TODO: Implement when roles will be ready
-        return;
+    public MembersGetResponseDto getHomeMembers(UUID homeId, UUID userId) {
+        Home home = findHome(homeId, userId);
+        checkOwnership(home, userId, HomeAccessRole.VIEWER);
+        return resourceAccessManagementService.getMembersByHome(home);
     }
 
-    public void checkRequiredRole(Home home, UUID userId) {
-        // TODO: Implement when roles will be ready
+    public MembersPostResponseDto updateHomeMembers(UUID homeId, UUID userId, MembersPostRequestDto requestDto) {
+        Home home = findHome(homeId, userId);
+        checkOwnership(home, userId, HomeAccessRole.MANAGER);
+        return resourceAccessManagementService.handleMembersPostRequest(requestDto, home, userId);
+    }
+
+    public void checkOwnership(Home home, UUID userId, HomeAccessRole role) {
+        this.resourceAccessManagementService.checkIfUserHasAccess(home, userId, role);
     }
 }
