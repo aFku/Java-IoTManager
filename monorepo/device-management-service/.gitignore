@@ -40,5 +40,8 @@ out/
 .env
 
 ### TODO ###
-
 TODO.txt
+
+### TEST ###
+*.ps1
+

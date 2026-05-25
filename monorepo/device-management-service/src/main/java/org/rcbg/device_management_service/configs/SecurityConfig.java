@@ -31,7 +31,7 @@ public class SecurityConfig {
     @Value("${spring.security.oauth2.resourceserver.jwt.issuer-uri}")
     private String issuerUri;
 
-    @Value("${keycloak.client-id}")
+    @Value("${keycloak.auth.client-id}")
     private String keycloakClientId;
 
     @Bean

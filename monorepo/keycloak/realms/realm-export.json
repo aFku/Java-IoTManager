@@ -154,8 +154,8 @@
               "realm-management": [
                 "query-users",
                 "impersonation",
-                "view-identity-providers",
                 "query-realms",
+                "view-identity-providers",
                 "manage-events",
                 "view-clients",
                 "view-authorization",
@@ -165,11 +165,11 @@
                 "query-clients",
                 "view-users",
                 "manage-authorization",
-                "view-events",
                 "manage-realm",
+                "view-events",
                 "query-groups",
-                "manage-users",
-                "manage-identity-providers"
+                "manage-identity-providers",
+                "manage-users"
               ]
             }
           },
@@ -376,6 +376,7 @@
           "attributes": {}
         }
       ],
+      "backend-to-keycloak": [],
       "admin-cli": [],
       "account-console": [],
       "broker": [
@@ -533,6 +534,28 @@
   "webAuthnPolicyPasswordlessAcceptableAaguids": [],
   "webAuthnPolicyPasswordlessExtraOrigins": [],
   "users": [
+    {
+      "id": "ea1700b5-d21f-4b71-9e27-95cfe7f1efbc",
+      "username": "service-account-backend-to-keycloak",
+      "emailVerified": false,
+      "enabled": true,
+      "createdTimestamp": 1779731443113,
+      "totp": false,
+      "serviceAccountClientId": "backend-to-keycloak",
+      "disableableCredentialTypes": [],
+      "requiredActions": [],
+      "realmRoles": [
+        "default-roles-iotmanager"
+      ],
+      "clientRoles": {
+        "realm-management": [
+          "query-users",
+          "view-users"
+        ]
+      },
+      "notBefore": 0,
+      "groups": []
+    },
     {
       "id": "02993fca-26fb-428c-89a5-eb8f0400f621",
       "username": "service-account-device-management-service",
@@ -730,6 +753,65 @@
       "fullScopeAllowed": true,
       "nodeReRegistrationTimeout": 0,
       "defaultClientScopes": [
+        "web-origins",
+        "acr",
+        "profile",
+        "roles",
+        "basic",
+        "email"
+      ],
+      "optionalClientScopes": [
+        "address",
+        "phone",
+        "offline_access",
+        "organization",
+        "microprofile-jwt"
+      ]
+    },
+    {
+      "id": "09511921-d0ca-48c4-bda5-3bbbc2de9cbe",
+      "clientId": "backend-to-keycloak",
+      "name": "",
+      "description": "",
+      "rootUrl": "",
+      "adminUrl": "",
+      "baseUrl": "",
+      "surrogateAuthRequired": false,
+      "enabled": true,
+      "alwaysDisplayInConsole": false,
+      "clientAuthenticatorType": "client-secret",
+      "secret": "**********",
+      "redirectUris": [
+        "/*"
+      ],
+      "webOrigins": [
+        "/*"
+      ],
+      "notBefore": 0,
+      "bearerOnly": false,
+      "consentRequired": false,
+      "standardFlowEnabled": false,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": true,
+      "publicClient": false,
+      "frontchannelLogout": true,
+      "protocol": "openid-connect",
+      "attributes": {
+        "realm_client": "false",
+        "oidc.ciba.grant.enabled": "false",
+        "client.secret.creation.time": "1779731443",
+        "backchannel.logout.session.required": "true",
+        "standard.token.exchange.enabled": "false",
+        "oauth2.device.authorization.grant.enabled": "false",
+        "backchannel.logout.revoke.offline.tokens": "false",
+        "dpop.bound.access.tokens": "false"
+      },
+      "authenticationFlowBindingOverrides": {},
+      "fullScopeAllowed": true,
+      "nodeReRegistrationTimeout": -1,
+      "defaultClientScopes": [
+        "service_account",
         "web-origins",
         "acr",
         "profile",

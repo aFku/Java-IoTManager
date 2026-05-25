@@ -6,6 +6,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
@@ -29,4 +30,11 @@ public class Home {
 
     @OneToMany(mappedBy = "home")
     private List<HomeAccess> accesses;
+
+    @NotNull
+    @Column(name = "is_orphaned", columnDefinition = "BOOLEAN DEFAULT FALSE")
+    private boolean isOrphaned;
+
+    @Column(name = "orphaned_at", nullable = true)
+    private Instant orphanedAt;
 }
