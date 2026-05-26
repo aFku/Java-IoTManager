@@ -1,5 +1,6 @@
 package org.rcbg.device_management_service.services;
 
+import io.swagger.v3.oas.models.links.Link;
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.rcbg.device_management_service.enums.HomeAccessRole;
@@ -15,10 +16,7 @@ import org.rcbg.device_management_service.repositories.HomeRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 @Slf4j
 @Service
@@ -54,6 +52,7 @@ public class HomeManagementService {
         creatorAccessRequest.setAdd(
                 Map.of(userId, HomeAccessRole.MANAGER)
         );
+        creatorAccessRequest.setDelete(new LinkedList<>());
         resourceAccessManagementService.handleMembersPostRequest(creatorAccessRequest, home, userId);
         log.info("New home: {} created for user: {}", dbResult.getHomeId(), userId);
         return homeMapper.toDto(dbResult);
