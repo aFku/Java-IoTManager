@@ -13,6 +13,10 @@ import org.rcbg.device_management_service.models.entities.Device;
 import org.rcbg.device_management_service.models.entities.Home;
 import org.rcbg.device_management_service.repositories.DeviceRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -31,6 +35,7 @@ public class DeviceManagementService {
     @Autowired
     private HomeManagementService homeManagementService;
 
+    @Cacheable(value="devices", key="'single_' + #deviceId + '_' + #userId")
     public ResponseDeviceDto getDevice(UUID homeId, UUID userId, UUID deviceId) {
         return deviceMapper.toDto(
                 findDevice(homeId, userId, deviceId, HomeAccessRole.VIEWER)
@@ -38,12 +43,17 @@ public class DeviceManagementService {
     }
 
     // TODO: Add pagination
+    @Cacheable(value="devices", key="'list_' + #homeId + '_' + #userId")
     public List<ResponseDeviceDto> getListOfDevices(UUID homeId, UUID userId) {
         Home home = findHome(homeId, userId, HomeAccessRole.VIEWER);
         return repository.findAllByHome(home).stream().map(deviceMapper::toDto).toList();
     }
 
     @Transactional
+    @Caching(
+            evict = {@CacheEvict(value="devices", key="'list_' + #homeId + '_' + #userId")},
+            put = {@CachePut(value="devices", key="'single_' + #deviceId + '_' + #userId")}
+    )
     public ResponseDeviceWithSecretDto createDevice(UUID homeId, UUID userId, RequestDeviceDto dto) {
         String secret = UUID.randomUUID().toString().replace("-", "");
         Home home = findHome(homeId, userId, HomeAccessRole.MANAGER);
@@ -54,6 +64,10 @@ public class DeviceManagementService {
     }
 
     @Transactional
+    @Caching(
+            evict = {@CacheEvict(value="devices", key="'list_' + #homeId + '_' + #userId")},
+            put = {@CachePut(value="devices", key="'single_' + #deviceId + '_' + #userId")}
+    )
     public ResponseDeviceDto updateDevice(UUID homeId, UUID userId, UUID deviceId, RequestDeviceDto dto) {
         Device device = findDevice(homeId, userId, deviceId, HomeAccessRole.MANAGER);
         deviceMapper.updateDeviceFromDto(dto, device);
@@ -61,6 +75,12 @@ public class DeviceManagementService {
     }
 
     @Transactional
+    @Caching(
+            evict = {
+                    @CacheEvict(value="devices", key="'list_' + #homeId + '_' + #userId"),
+                    @CacheEvict(value="devices", key="'single_' + #deviceId + '_' + #userId")
+            }
+    )
     public void deleteDevice(UUID homeId, UUID userId, UUID deviceId) {
         Device device = findDevice(homeId, userId, deviceId, HomeAccessRole.MANAGER);
         repository.delete(device);
@@ -77,6 +97,13 @@ public class DeviceManagementService {
     }
 
     @Transactional
+    @Caching(
+            evict = {
+                @CacheEvict(value = "devices", key = "'list_' + #homeId + '_' + #userId"),
+                @CacheEvict(value = "devices", key = "'list_' + #targetHomeId + '_' + #userId"),
+                @CacheEvict(value = "devices", key = "'single_' + #deviceId + '_' + #userId")
+            }
+    )
     public ResponseDeviceDto moveDeviceToTargetHome(UUID homeId, UUID userId, UUID deviceId, UUID targetHomeId) {
         Device device = findDevice(homeId, userId, deviceId, HomeAccessRole.MANAGER);
         Home targetHome = findHome(targetHomeId, userId, HomeAccessRole.MANAGER);
@@ -84,11 +111,6 @@ public class DeviceManagementService {
         Device dbResult = repository.save(device);
         repository.flush();
         return deviceMapper.toDto(dbResult);
-    }
-
-    // TODO: Refactor ownership and device management permissions when roles are ready
-    private boolean checkIfUserHasAccess(Device device, String userId) {
-        return false;
     }
 
     private Home findHome(UUID homeId, UUID userId, HomeAccessRole role) {

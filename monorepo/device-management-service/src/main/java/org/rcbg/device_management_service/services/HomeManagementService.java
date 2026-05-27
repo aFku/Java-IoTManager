@@ -14,6 +14,10 @@ import org.rcbg.device_management_service.models.dto.homes.ResponseHomeDto;
 import org.rcbg.device_management_service.models.entities.Home;
 import org.rcbg.device_management_service.repositories.HomeRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -31,6 +35,7 @@ public class HomeManagementService {
     @Autowired
     private ResourceAccessManagementService resourceAccessManagementService;
 
+    @Cacheable(value="homes", key="'single_' + #homeId + '_' + #userId")
     public ResponseHomeDto getHome(UUID homeId, UUID userId) {
         Home home = findHome(homeId, userId);
         checkOwnership(home, userId, HomeAccessRole.VIEWER);
@@ -38,11 +43,16 @@ public class HomeManagementService {
     }
 
     // TODO: Add pagination
+    @Cacheable(value="homes", key="'list_' + #userId")
     public List<ResponseHomeDto> getListOfHomes(UUID userId) {
         return repository.findAllByUserId(userId).stream().map(homeMapper::toDto).toList();
     }
 
     @Transactional
+    @Caching(
+            evict = {@CacheEvict(value="homes", key="'list_' + #userId")},
+            put = {@CachePut(value="homes", key="'single_' + #homeId + '_' + #userId")}
+    )
     public ResponseHomeDto createHome(RequestHomeDto dto, UUID userId) {
         log.info("Creating new home object for user: {}", userId);
         Home home = homeMapper.toEntity(dto);
@@ -59,6 +69,10 @@ public class HomeManagementService {
     }
 
     @Transactional
+    @Caching(
+            evict = {@CacheEvict(value="homes", key="'list_' + #userId")},
+            put = {@CachePut(value="homes", key="'single_' + #homeId + '_' + #userId")}
+    )
     public ResponseHomeDto updateHome(UUID homeId, UUID userId, RequestHomeDto dto) {
         Home home = findHome(homeId, userId);
         checkOwnership(home, userId, HomeAccessRole.MANAGER);
@@ -67,6 +81,12 @@ public class HomeManagementService {
     }
 
     @Transactional
+    @Caching(
+            evict = {
+                    @CacheEvict(value="homes", key="'list_' + #userId"),
+                    @CacheEvict(value="homes", key="'single_' + #homeId + '_' + #userId")
+            }
+    )
     public void deleteHome(UUID homeId, UUID userId) {
         Home home = findHome(homeId, userId);
         checkOwnership(home, userId, HomeAccessRole.MANAGER);
@@ -83,12 +103,16 @@ public class HomeManagementService {
 
     }
 
+    @Cacheable(value="homes_members", key="#homeId + '_' + #userId")
     public MembersGetResponseDto getHomeMembers(UUID homeId, UUID userId) {
         Home home = findHome(homeId, userId);
         checkOwnership(home, userId, HomeAccessRole.VIEWER);
         return resourceAccessManagementService.getMembersByHome(home);
     }
 
+    @Caching(
+            evict = {@CacheEvict(value="homes_members", allEntries = true)}
+    )
     public MembersPostResponseDto updateHomeMembers(UUID homeId, UUID userId, MembersPostRequestDto requestDto) {
         Home home = findHome(homeId, userId);
         checkOwnership(home, userId, HomeAccessRole.MANAGER);
