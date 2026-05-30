@@ -63,7 +63,7 @@ public class HomeManagementService {
                 Map.of(userId, HomeAccessRole.MANAGER)
         );
         creatorAccessRequest.setDelete(new LinkedList<>());
-        resourceAccessManagementService.handleMembersPostRequest(creatorAccessRequest, home, userId);
+        resourceAccessManagementService.handleMembersPostRequest(creatorAccessRequest, dbResult, userId);
         log.info("New home: {} created for user: {}", dbResult.getHomeId(), userId);
         return homeMapper.toDto(dbResult);
     }
