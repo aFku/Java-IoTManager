@@ -28,7 +28,7 @@ public class Home {
     @OneToMany(mappedBy = "home", fetch = FetchType.LAZY)
     private List<Device> devices;
 
-    @OneToMany(mappedBy = "home")
+    @OneToMany(mappedBy = "home", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<HomeAccess> accesses;
 
     @NotNull

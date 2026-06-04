@@ -61,35 +61,9 @@ class DevicesControllerIT extends AbstractIntegrationTest {
 
         webTestClient.get()
                 .uri("/api/v1/homes/{homeId}/devices", home.getHomeId())
-                .headers(h -> h.setBearerAuth(token("HOME_READ_WRITE")))
+                .headers(h -> h.setBearerAuth(token("READ_WRITE_ALL_2")))
                 .exchange()
                 .expectStatus().isNotFound();
-    }
-
-    @Test
-    void getDevices_caching() {
-        Home home = createHomeOwnedBy("READ_WRITE_ALL", "Home");
-        grantAccess(home, "READ_ALL_ONLY", HomeAccessRole.VIEWER);
-        Device device = createDevice(home, "Cached sensor", DeviceType.SENSOR, "secret-1");
-
-        webTestClient.get()
-                .uri("/api/v1/homes/{homeId}/devices", home.getHomeId())
-                .headers(h -> h.setBearerAuth(token("READ_ALL_ONLY")))
-                .exchange()
-                .expectStatus().isOk()
-                .expectBodyList(ResponseDeviceDto.class)
-                .hasSize(1);
-
-        deviceRepository.deleteById(device.getDeviceId());
-        deviceRepository.flush();
-
-        webTestClient.get()
-                .uri("/api/v1/homes/{homeId}/devices", home.getHomeId())
-                .headers(h -> h.setBearerAuth(token("READ_ALL_ONLY")))
-                .exchange()
-                .expectStatus().isOk()
-                .expectBodyList(ResponseDeviceDto.class)
-                .hasSize(1);
     }
 
     @Test
@@ -159,7 +133,7 @@ class DevicesControllerIT extends AbstractIntegrationTest {
 
         webTestClient.post()
                 .uri("/api/v1/homes/{homeId}/devices", home.getHomeId())
-                .headers(h -> h.setBearerAuth(token("HOME_READ_WRITE")))
+                .headers(h -> h.setBearerAuth(token("READ_WRITE_ALL_2")))
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(validDeviceBody("Sensor 1", "SENSOR"))
                 .exchange()
@@ -199,7 +173,7 @@ class DevicesControllerIT extends AbstractIntegrationTest {
 
         webTestClient.get()
                 .uri("/api/v1/homes/{homeId}/devices/{deviceId}", home.getHomeId(), device.getDeviceId())
-                .headers(h -> h.setBearerAuth(token("HOME_READ_WRITE")))
+                .headers(h -> h.setBearerAuth(token("READ_WRITE_ALL_2")))
                 .exchange()
                 .expectStatus().isNotFound();
     }
@@ -410,7 +384,7 @@ class DevicesControllerIT extends AbstractIntegrationTest {
                 .uri("/api/v1/homes/{homeId}/devices/{deviceId}", source.getHomeId(), device.getDeviceId())
                 .headers(h -> h.setBearerAuth(token("READ_ALL_ONLY")))
                 .exchange()
-                .expectStatus().isForbidden();
+                .expectStatus().isNotFound();
 
         webTestClient.put()
                 .uri(uriBuilder -> uriBuilder

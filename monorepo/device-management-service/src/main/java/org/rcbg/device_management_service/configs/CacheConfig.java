@@ -15,26 +15,31 @@ import org.springframework.data.redis.serializer.*;
 public class CacheConfig {
 
     @Bean
-    public ObjectMapper objectMapper() {
-        return new ObjectMapper()
-                .findAndRegisterModules();
+    ObjectMapper objectMapper() {
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.findAndRegisterModules();
+
+        mapper.activateDefaultTyping(
+                mapper.getPolymorphicTypeValidator(),
+                ObjectMapper.DefaultTyping.NON_FINAL
+        );
+
+        return mapper;
     }
 
     @Bean
-    public RedisCacheConfiguration redisCacheConfiguration(ObjectMapper objectMapper) {
+    public RedisCacheConfiguration redisCacheConfiguration(ObjectMapper mapper) {
 
-        RedisSerializer<Object> serializer =
-                new GenericJackson2JsonRedisSerializer(objectMapper);
+        GenericJackson2JsonRedisSerializer serializer =
+                new GenericJackson2JsonRedisSerializer(mapper);
 
         return RedisCacheConfiguration.defaultCacheConfig()
                 .serializeKeysWith(
                         RedisSerializationContext.SerializationPair
-                                .fromSerializer(new StringRedisSerializer())
-                )
+                                .fromSerializer(new StringRedisSerializer()))
                 .serializeValuesWith(
                         RedisSerializationContext.SerializationPair
-                                .fromSerializer(serializer)
-                );
+                                .fromSerializer(serializer));
     }
 
     @Bean

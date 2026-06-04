@@ -18,6 +18,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.cache.CacheManager;
+import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
@@ -76,7 +77,7 @@ public abstract class AbstractIntegrationTest {
 
         registry.add("KEYCLOAK_ADDR", () -> keycloak.getHost() + ":" + keycloak.getFirstMappedPort());
         registry.add("KEYCLOAK_REALM", () -> "IoTManager");
-        registry.add("KEYCLOAK_AUTH_CLIENT_ID", () -> "login-service");
+        registry.add("KEYCLOAK_AUTH_CLIENT_ID", () -> "device-management-service");
         registry.add("KEYCLOAK_SVC_CLIENT_ID", () -> "device-management-service");
         registry.add("KEYCLOAK_SVC_CLIENT_SECRET", () -> "test-device-secret-456");
         registry.add("spring.security.oauth2.resourceserver.jwt.issuer-uri", () ->
@@ -92,6 +93,7 @@ public abstract class AbstractIntegrationTest {
     @Autowired protected DeviceRepository deviceRepository;
     @Autowired protected HomeAccessRepository homeAccessRepository;
     @Autowired protected CacheManager cacheManager;
+    @Autowired protected RedisConnectionFactory redisConnectionFactory;
 
     protected final Map<String, UUID> userIds = new HashMap<>();
     protected final Map<String, String> tokens = new HashMap<>();
@@ -101,6 +103,10 @@ public abstract class AbstractIntegrationTest {
         deviceRepository.deleteAll();
         homeAccessRepository.deleteAll();
         homeRepository.deleteAll();
+        redisConnectionFactory
+                .getConnection()
+                .serverCommands()
+                .flushAll();
 
         Optional.ofNullable(cacheManager.getCache("homes")).ifPresent(c -> c.clear());
         Optional.ofNullable(cacheManager.getCache("devices")).ifPresent(c -> c.clear());

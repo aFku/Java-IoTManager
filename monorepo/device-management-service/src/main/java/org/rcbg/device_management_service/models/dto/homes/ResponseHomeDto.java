@@ -11,7 +11,7 @@ import java.util.UUID;
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
-public class ResponseHomeDto {
+public class ResponseHomeDto{
     UUID homeId;
     String name;
 }

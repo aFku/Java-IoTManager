@@ -661,6 +661,30 @@
       }
     },
     {
+      "username": "READ_WRITE_ALL_2",
+      "email": "readwrite2@test.com",
+      "firstName": "Read2",
+      "lastName": "Write2",
+      "emailVerified": true,
+      "enabled": true,
+      "requiredActions": [],
+      "credentials": [
+        {
+          "type": "password",
+          "value": "READ_WRITE_ALL_2",
+          "temporary": false
+        }
+      ],
+      "clientRoles": {
+        "device-management-service": [
+          "DEVICE_READ",
+          "HOME_READ",
+          "DEVICE_WRITE",
+          "HOME_WRITE"
+        ]
+      }
+    },
+    {
       "username": "HOME_READ_WRITE",
       "email": "homereadwrite@test.com",
       "firstName": "Home",
