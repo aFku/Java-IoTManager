@@ -1,13 +1,16 @@
 package org.rcbg.device_management_service.controllers;
 
-import org.rcbg.device_management_service.models.dto.home_access.MembersGetResponseDto;
 import org.rcbg.device_management_service.models.dto.home_access.MembersPostRequestDto;
 import org.rcbg.device_management_service.models.dto.home_access.MembersPostResponseDto;
+import org.rcbg.device_management_service.models.dto.home_access.RoleGetResponseDto;
 import org.rcbg.device_management_service.models.dto.homes.RequestHomeDto;
 import org.rcbg.device_management_service.models.dto.homes.ResponseHomeDto;
 import org.rcbg.device_management_service.services.HomeManagementService;
 import org.rcbg.device_management_service.validators.groups.CreateGroup;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -15,7 +18,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -27,8 +29,8 @@ public class HomesController {
 
     @GetMapping
     @PreAuthorize("hasRole('HOME_READ')")
-    public ResponseEntity<List<ResponseHomeDto>> getAllAvailableHomes(Authentication auth) {
-        List<ResponseHomeDto> responseDtoList = homeManagementService.getListOfHomes(UUID.fromString(auth.getName()));
+    public ResponseEntity<Page<ResponseHomeDto>> getAllAvailableHomes(Authentication auth, @PageableDefault(page = 0, size = 20, sort = "name") Pageable pageable) {
+        Page<ResponseHomeDto> responseDtoList = homeManagementService.getListOfHomes(UUID.fromString(auth.getName()), pageable);
         return ResponseEntity
                 .status(HttpStatus.OK)
                 .body(responseDtoList);
@@ -85,8 +87,8 @@ public class HomesController {
 
     @GetMapping("/{homeId}/members")
     @PreAuthorize("hasRole('HOME_READ')")
-    public ResponseEntity<MembersGetResponseDto> getMembersList(@PathVariable UUID homeId, Authentication auth) {
-        MembersGetResponseDto responseDto = homeManagementService.getHomeMembers(homeId, UUID.fromString(auth.getName()));
+    public ResponseEntity<Page<RoleGetResponseDto>> getMembersList(@PathVariable UUID homeId, Authentication auth, @PageableDefault(page = 0, size = 20, sort = "userId") Pageable pageable) {
+        Page<RoleGetResponseDto> responseDto = homeManagementService.getHomeMembers(homeId, UUID.fromString(auth.getName()), pageable);
         return ResponseEntity
                 .status(HttpStatus.OK)
                 .body(responseDto);

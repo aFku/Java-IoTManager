@@ -11,6 +11,8 @@ import org.rcbg.device_management_service.models.entities.Home;
 import org.rcbg.device_management_service.models.entities.HomeAccess;
 import org.rcbg.device_management_service.repositories.HomeAccessRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -115,12 +117,10 @@ public class ResourceAccessManagementService {
         return response;
     }
 
-    public MembersGetResponseDto getMembersByHome(Home home) {
-        List<HomeAccess> result = repository.findAllByHome_HomeId(home.getHomeId());
-        return new MembersGetResponseDto(
-                result.stream().map(access ->
-                        new RoleGetResponseDto(access.getUserId(), access.getRole()))
-                        .toList()
+    public Page<RoleGetResponseDto> getMembersByHome(Home home, Pageable pageable) {
+        Page<HomeAccess> result = repository.findAllByHome_HomeId(home.getHomeId(), pageable);
+        return result.map(access ->
+                new RoleGetResponseDto(access.getUserId(), access.getRole())
         );
     }
 }

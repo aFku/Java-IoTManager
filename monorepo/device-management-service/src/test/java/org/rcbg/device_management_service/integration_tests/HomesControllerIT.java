@@ -27,9 +27,11 @@ class HomesControllerIT extends AbstractIntegrationTest {
                 .headers(h -> h.setBearerAuth(token("READ_ALL_ONLY")))
                 .exchange()
                 .expectStatus().isOk()
-                .expectBodyList(ResponseHomeDto.class)
-                .hasSize(1)
-                .value(list -> assertThat(list.get(0).getHomeId()).isEqualTo(home.getHomeId()));
+                .expectBody()
+                .jsonPath("$.content").isArray()
+                .jsonPath("$.content.length()").isEqualTo(1)
+                .jsonPath("$.content[0].homeId").isEqualTo(home.getHomeId().toString())
+                .jsonPath("$.totalElements").isEqualTo(1);
     }
 
     @Test
@@ -212,8 +214,9 @@ class HomesControllerIT extends AbstractIntegrationTest {
                 .exchange()
                 .expectStatus().isOk()
                 .expectBody()
-                .jsonPath("$.members").isArray()
-                .jsonPath("$.members.length()").isEqualTo(2);
+                .jsonPath("$.content").isArray()
+                .jsonPath("$.content.length()").isEqualTo(2)
+                .jsonPath("$.totalElements").isEqualTo(2);
     }
 
     @Test
@@ -283,5 +286,55 @@ class HomesControllerIT extends AbstractIntegrationTest {
                 .bodyValue(Map.of("add", Map.of(), "delete", List.of()))
                 .exchange()
                 .expectStatus().isNotFound();
+    }
+
+    @Test
+    void getHomes_withPaginationParameters_success() {
+        Home home1 = createHomeOwnedBy("HOME_READ_WRITE", "Home A");
+        grantAccess(home1, "READ_ALL_ONLY", HomeAccessRole.VIEWER);
+        Home home2 = createHomeOwnedBy("HOME_READ_WRITE", "Home B");
+        grantAccess(home2, "READ_ALL_ONLY", HomeAccessRole.VIEWER);
+        Home home3 = createHomeOwnedBy("HOME_READ_WRITE", "Home C");
+        grantAccess(home3, "READ_ALL_ONLY", HomeAccessRole.VIEWER);
+
+        webTestClient.get()
+                .uri("/api/v1/homes?page=0&size=2&sort=name,desc")
+                .headers(h -> h.setBearerAuth(token("READ_ALL_ONLY")))
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody()
+                .jsonPath("$.content").isArray()
+                .jsonPath("$.content.length()").isEqualTo(2)
+                .jsonPath("$.content[0].name").isEqualTo("Home C")
+                .jsonPath("$.content[1].name").isEqualTo("Home B")
+                .jsonPath("$.totalElements").isEqualTo(3)
+                .jsonPath("$.totalPages").isEqualTo(2)
+                .jsonPath("$.number").isEqualTo(0)
+                .jsonPath("$.size").isEqualTo(2);
+    }
+
+    @Test
+    void getMembers_withPaginationParameters_success() {
+        Home home = createHomeOwnedBy("HOME_READ_WRITE", "Members Pagination");
+        grantAccess(home, "READ_WRITE_ALL", HomeAccessRole.VIEWER);
+        grantAccess(home, "READ_WRITE_ALL_2", HomeAccessRole.VIEWER);
+
+        webTestClient.get()
+                .uri(uriBuilder -> uriBuilder
+                        .path("/api/v1/homes/{homeId}/members")
+                        .queryParam("page", "1")
+                        .queryParam("size", "2")
+                        .build(home.getHomeId()))
+                .headers(h -> h.setBearerAuth(token("HOME_READ_WRITE")))
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody()
+                .jsonPath("$.content").isArray()
+                .jsonPath("$.content.length()").isEqualTo(1)
+                .jsonPath("$.totalElements").isEqualTo(3)
+                .jsonPath("$.totalPages").isEqualTo(2)
+                .jsonPath("$.number").isEqualTo(1)
+                .jsonPath("$.size").isEqualTo(2)
+                .jsonPath("$.last").isEqualTo(true);
     }
 }

@@ -2,6 +2,8 @@ package org.rcbg.device_management_service.repositories;
 
 import org.rcbg.device_management_service.models.entities.Home;
 import org.rcbg.device_management_service.models.entities.HomeAccess;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -17,7 +19,7 @@ import java.util.UUID;
 public interface HomeAccessRepository extends JpaRepository<HomeAccess, Integer> {
     Optional<HomeAccess> findByHomeAndUserId(Home home, UUID userId);
     List<HomeAccess> findByHome_HomeIdAndUserIdIn(UUID homeId, Set<UUID> users);
-    List<HomeAccess> findAllByHome_HomeId(UUID homeId);
+    Page<HomeAccess> findAllByHome_HomeId(UUID homeId, Pageable pageable);
 
     @Modifying
     @Query("""

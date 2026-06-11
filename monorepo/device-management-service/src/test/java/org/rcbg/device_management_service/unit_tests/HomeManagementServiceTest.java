@@ -18,18 +18,20 @@ import org.rcbg.device_management_service.exceptions.AccessDeniedException;
 import org.rcbg.device_management_service.exceptions.InvalidMembersRequestException;
 import org.rcbg.device_management_service.exceptions.ObjectDoesNotExistException;
 import org.rcbg.device_management_service.mappers.HomeMapper;
-import org.rcbg.device_management_service.mappers.HomeMapperImpl;
-import org.rcbg.device_management_service.models.dto.home_access.MembersGetResponseDto;
 import org.rcbg.device_management_service.models.dto.home_access.MembersPostRequestDto;
 import org.rcbg.device_management_service.models.dto.home_access.MembersPostResponseDto;
+import org.rcbg.device_management_service.models.dto.home_access.RoleGetResponseDto;
 import org.rcbg.device_management_service.models.dto.homes.RequestHomeDto;
 import org.rcbg.device_management_service.models.dto.homes.ResponseHomeDto;
 import org.rcbg.device_management_service.models.entities.Home;
-import org.rcbg.device_management_service.models.entities.HomeAccess;
 import org.rcbg.device_management_service.repositories.HomeAccessRepository;
 import org.rcbg.device_management_service.repositories.HomeRepository;
 import org.rcbg.device_management_service.services.HomeManagementService;
 import org.rcbg.device_management_service.services.ResourceAccessManagementService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 import java.util.*;
 
@@ -116,42 +118,47 @@ public class HomeManagementServiceTest {
         Home home2 = new Home();
         home2.setHomeId(UUID.randomUUID());
         home2.setName("Home 2");
+        Pageable page = PageRequest.of(0, 20);
 
-        when(homeRepository.findAllByUserId(userId)).thenReturn(List.of(home1, home2));
+        when(homeRepository.findAllByUserId(userId, page)).thenReturn(new PageImpl<>(List.of(home1, home2)));
 
         // WHEN
-        List<ResponseHomeDto> result = homeManagementService.getListOfHomes(userId);
+        Page<ResponseHomeDto> result = homeManagementService.getListOfHomes(userId, page);
 
         // THEN
-        assertEquals(2, result.size(), "List should contain exactly 2 elements");
-        assertEquals("Home 1", result.get(0).getName(), "First element name should match");
-        assertEquals("Home 2", result.get(1).getName(), "Second element name should match");
+        assertEquals(2, result.getTotalElements(), "List should contain exactly 2 elements");
+        assertEquals("Home 1", result.getContent().get(0).getName(), "First element name should match");
+        assertEquals("Home 2", result.getContent().get(1).getName(), "Second element name should match");
     }
 
     @Test
     void testGetListOfHomesEmpty() {
         // GIVEN
         UUID userId = UUID.randomUUID();
-        when(homeRepository.findAllByUserId(userId)).thenReturn(Collections.emptyList());
+        Pageable page = PageRequest.of(0, 20);
+        when(homeRepository.findAllByUserId(userId, page)).thenReturn(new PageImpl<>(Collections.emptyList()));
+
 
         // WHEN
-        List<ResponseHomeDto> result = homeManagementService.getListOfHomes(userId);
+        Page<ResponseHomeDto> result = homeManagementService.getListOfHomes(userId, page);
 
         // THEN
-        assertTrue(result.isEmpty(), "List should be empty when no homes found");
+        assertTrue(result.getContent().isEmpty(), "List should be empty when no homes found");
+        assertEquals(0, result.getTotalElements(), "Total elements should be 0");
     }
 
     @Test
     void testGetListOfHomesOnlyOwnedByUser() {
         // GIVEN
         UUID userId = UUID.randomUUID();
-        when(homeRepository.findAllByUserId(userId)).thenReturn(Collections.emptyList());
+        Pageable page = PageRequest.of(0, 20);
+        when(homeRepository.findAllByUserId(userId, page)).thenReturn(new PageImpl<>(Collections.emptyList()));
 
         // WHEN
-        homeManagementService.getListOfHomes(userId);
+        homeManagementService.getListOfHomes(userId, page);
 
         // THEN
-        verify(homeRepository).findAllByUserId(userId);
+        verify(homeRepository).findAllByUserId(userId, page);
     }
 
     @Test
@@ -421,20 +428,21 @@ public class HomeManagementServiceTest {
         UUID userId = UUID.randomUUID();
         Home home = new Home();
         home.setHomeId(homeId);
+        Pageable pageable = PageRequest.of(0, 20);
 
-        MembersGetResponseDto expectedResponse = new MembersGetResponseDto(Collections.emptyList());
+        Page<RoleGetResponseDto> expectedResponse = new PageImpl<>(Collections.emptyList());
 
         when(homeRepository.findById(homeId)).thenReturn(Optional.of(home));
-        when(resourceAccessManagementService.getMembersByHome(home)).thenReturn(expectedResponse);
+        when(resourceAccessManagementService.getMembersByHome(home, pageable)).thenReturn(expectedResponse);
 
         // WHEN
-        MembersGetResponseDto result = homeManagementService.getHomeMembers(homeId, userId);
+        Page<RoleGetResponseDto> result = homeManagementService.getHomeMembers(homeId, userId, pageable);
 
         // THEN
         assertNotNull(result, "Response should not be null");
         assertEquals(expectedResponse, result, "Returned response should match the one from access service");
         verify(resourceAccessManagementService).checkIfUserHasAccess(home, userId, HomeAccessRole.VIEWER);
-        verify(resourceAccessManagementService).getMembersByHome(home);
+        verify(resourceAccessManagementService).getMembersByHome(home, pageable);
     }
 
     @Test
@@ -444,6 +452,7 @@ public class HomeManagementServiceTest {
         UUID userId = UUID.randomUUID();
         Home home = new Home();
         home.setHomeId(homeId);
+        Pageable pageable = PageRequest.of(0, 20);
 
         when(homeRepository.findById(homeId)).thenReturn(Optional.of(home));
         doThrow(new ObjectDoesNotExistException("No access", userId))
@@ -453,10 +462,10 @@ public class HomeManagementServiceTest {
         // WHEN - THEN
         assertThrows(
                 ObjectDoesNotExistException.class,
-                () -> homeManagementService.getHomeMembers(homeId, userId),
+                () -> homeManagementService.getHomeMembers(homeId, userId, pageable),
                 "Should throw exception when user lacks VIEWER access"
         );
-        verify(resourceAccessManagementService, never()).getMembersByHome(any());
+        verify(resourceAccessManagementService, never()).getMembersByHome(any(Home.class), any(Pageable.class));
     }
 
     @Test
@@ -464,16 +473,17 @@ public class HomeManagementServiceTest {
         // GIVEN
         UUID homeId = UUID.randomUUID();
         UUID userId = UUID.randomUUID();
+        Pageable pageable = PageRequest.of(0, 20);
 
         when(homeRepository.findById(homeId)).thenReturn(Optional.empty());
 
         // WHEN - THEN
         assertThrows(
                 ObjectDoesNotExistException.class,
-                () -> homeManagementService.getHomeMembers(homeId, userId),
+                () -> homeManagementService.getHomeMembers(homeId, userId, pageable),
                 "Should throw exception when home is not found"
         );
-        verify(resourceAccessManagementService, never()).getMembersByHome(any());
+        verify(resourceAccessManagementService, never()).getMembersByHome(any(Home.class), any(Pageable.class));
     }
 
     @Test

@@ -11,13 +11,17 @@ import org.rcbg.device_management_service.enums.HomeAccessRole;
 import org.rcbg.device_management_service.exceptions.AccessDeniedException;
 import org.rcbg.device_management_service.exceptions.InvalidMembersRequestException;
 import org.rcbg.device_management_service.exceptions.ObjectDoesNotExistException;
-import org.rcbg.device_management_service.models.dto.home_access.MembersGetResponseDto;
 import org.rcbg.device_management_service.models.dto.home_access.MembersPostRequestDto;
 import org.rcbg.device_management_service.models.dto.home_access.MembersPostResponseDto;
+import org.rcbg.device_management_service.models.dto.home_access.RoleGetResponseDto;
 import org.rcbg.device_management_service.models.entities.Home;
 import org.rcbg.device_management_service.models.entities.HomeAccess;
 import org.rcbg.device_management_service.repositories.HomeAccessRepository;
 import org.rcbg.device_management_service.services.ResourceAccessManagementService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 import java.util.*;
 
@@ -228,15 +232,20 @@ public class ResourceAccessManagementServiceTest {
                 new HomeAccess(2, home, userId2, HomeAccessRole.VIEWER)
         );
 
-        when(repository.findAllByHome_HomeId(home.getHomeId())).thenReturn(mockedAccessList);
+        Pageable pageable = PageRequest.of(0, 20);
+        Page<HomeAccess> mockedPage = new PageImpl<>(mockedAccessList);
+
+        when(repository.findAllByHome_HomeId(home.getHomeId(), pageable)).thenReturn(mockedPage);
 
         // WHEN
-        MembersGetResponseDto result = resourceAccessManagementService.getMembersByHome(home);
+        Page<RoleGetResponseDto> result = resourceAccessManagementService.getMembersByHome(home, pageable);
 
         // THEN
-        assertNotNull(result);
-        assertNotNull(result.getMembers());
-        assertEquals(2, result.getMembers().size());
+        assertNotNull(result, "Result page should not be null");
+        assertNotNull(result.getContent(), "Page content should not be null");
+        assertEquals(2, result.getContent().size(), "Should contain exactly 2 members");
+        assertEquals(userId1, result.getContent().get(0).getUserId());
+        assertEquals(HomeAccessRole.MANAGER, result.getContent().get(0).getRole());
     }
 
     @Test
@@ -245,14 +254,17 @@ public class ResourceAccessManagementServiceTest {
         Home home = new Home();
         home.setHomeId(UUID.randomUUID());
 
-        when(repository.findAllByHome_HomeId(home.getHomeId())).thenReturn(Collections.emptyList());
+        Pageable pageable = PageRequest.of(0, 20);
+        Page<HomeAccess> emptyPage = new PageImpl<>(Collections.emptyList());
+
+        when(repository.findAllByHome_HomeId(home.getHomeId(), pageable)).thenReturn(emptyPage);
 
         // WHEN
-        MembersGetResponseDto result = resourceAccessManagementService.getMembersByHome(home);
+        Page<RoleGetResponseDto> result = resourceAccessManagementService.getMembersByHome(home, pageable);
 
         // THEN
-        assertNotNull(result);
-        assertNotNull(result.getMembers());
-        assertTrue(result.getMembers().isEmpty());
+        assertNotNull(result, "Result page should not be null");
+        assertTrue(result.isEmpty(), "Result page should be empty");
+        assertTrue(result.getContent().isEmpty(), "Page content list should be empty");
     }
 }

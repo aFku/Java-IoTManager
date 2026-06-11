@@ -1,14 +1,13 @@
 package org.rcbg.device_management_service.services;
 
-import io.swagger.v3.oas.models.links.Link;
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.rcbg.device_management_service.enums.HomeAccessRole;
 import org.rcbg.device_management_service.exceptions.ObjectDoesNotExistException;
 import org.rcbg.device_management_service.mappers.HomeMapper;
-import org.rcbg.device_management_service.models.dto.home_access.MembersGetResponseDto;
 import org.rcbg.device_management_service.models.dto.home_access.MembersPostRequestDto;
 import org.rcbg.device_management_service.models.dto.home_access.MembersPostResponseDto;
+import org.rcbg.device_management_service.models.dto.home_access.RoleGetResponseDto;
 import org.rcbg.device_management_service.models.dto.homes.RequestHomeDto;
 import org.rcbg.device_management_service.models.dto.homes.ResponseHomeDto;
 import org.rcbg.device_management_service.models.entities.Home;
@@ -18,6 +17,8 @@ import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -42,10 +43,9 @@ public class HomeManagementService {
         return homeMapper.toDto(home);
     }
 
-    // TODO: Add pagination
-    @Cacheable(value="homes", key="'list_' + #userId")
-    public List<ResponseHomeDto> getListOfHomes(UUID userId) {
-        return repository.findAllByUserId(userId).stream().map(homeMapper::toDto).toList();
+    @Cacheable(value="homes", key="'list_' + #userId + '_pageNumber_' + #pageable.pageNumber + '_pageSize_' + #pageable.pageSize + '_sort_' + #pageable.sort.toString()")
+    public Page<ResponseHomeDto> getListOfHomes(UUID userId, Pageable pageable) {
+        return repository.findAllByUserId(userId, pageable).map(homeMapper::toDto);
     }
 
     @Transactional
@@ -103,11 +103,11 @@ public class HomeManagementService {
 
     }
 
-    @Cacheable(value="homes_members", key="#homeId + '_' + #userId")
-    public MembersGetResponseDto getHomeMembers(UUID homeId, UUID userId) {
+    @Cacheable(value="homes_members", key="#homeId + '_' + #userId + '_pageNumber_' + #pageable.pageNumber + '_pageSize_' + #pageable.pageSize + '_sort_' + #pageable.sort.toString()")
+    public Page<RoleGetResponseDto> getHomeMembers(UUID homeId, UUID userId, Pageable pageable) {
         Home home = findHome(homeId, userId);
         checkOwnership(home, userId, HomeAccessRole.VIEWER);
-        return resourceAccessManagementService.getMembersByHome(home);
+        return resourceAccessManagementService.getMembersByHome(home, pageable);
     }
 
     @Caching(
