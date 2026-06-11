@@ -17,6 +17,8 @@ import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -42,11 +44,10 @@ public class DeviceManagementService {
         );
     }
 
-    // TODO: Add pagination
-    @Cacheable(value="devices", key="'list_' + #homeId + '_' + #userId")
-    public List<ResponseDeviceDto> getListOfDevices(UUID homeId, UUID userId) {
+    @Cacheable(value="devices", key="'list_' + #homeId + '_' + #userId + '_pageNumber_' + #pageable.pageNumber + '_pageSize_' + #pageable.pageSize + '_sort_' + #pageable.sort.toString()")
+    public Page<ResponseDeviceDto> getListOfDevices(UUID homeId, UUID userId, Pageable pageable) {
         Home home = findHome(homeId, userId, HomeAccessRole.VIEWER);
-        return repository.findAllByHome(home).stream().map(deviceMapper::toDto).toList();
+        return repository.findAllByHome(home, pageable).map(deviceMapper::toDto);
     }
 
     @Transactional

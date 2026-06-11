@@ -18,6 +18,10 @@ import org.rcbg.device_management_service.models.entities.Home;
 import org.rcbg.device_management_service.repositories.DeviceRepository;
 import org.rcbg.device_management_service.services.DeviceManagementService;
 import org.rcbg.device_management_service.services.HomeManagementService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 import java.util.Collections;
 import java.util.List;
@@ -131,16 +135,17 @@ public class DeviceManagementServiceTest {
         Home home = new Home();
         Device device = new Device();
         ResponseDeviceDto dto = new ResponseDeviceDto();
+        Pageable pageable = PageRequest.of(0, 2);
 
         when(homeManagementService.findHome(homeId, userId)).thenReturn(home);
-        when(deviceRepository.findAllByHome(home)).thenReturn(List.of(device));
+        when(deviceRepository.findAllByHome(home, pageable)).thenReturn(new PageImpl<>(List.of(device)));
         when(deviceMapper.toDto(device)).thenReturn(dto);
 
         // WHEN
-        List<ResponseDeviceDto> result = deviceManagementService.getListOfDevices(homeId, userId);
+        Page<ResponseDeviceDto> result = deviceManagementService.getListOfDevices(homeId, userId, pageable);
 
         // THEN
-        assertEquals(1, result.size());
+        assertEquals(1, result.getTotalElements());
         verify(homeManagementService).checkOwnership(home, userId, HomeAccessRole.VIEWER);
     }
 
@@ -149,16 +154,17 @@ public class DeviceManagementServiceTest {
         // GIVEN
         UUID homeId = UUID.randomUUID();
         UUID userId = UUID.randomUUID();
+        Pageable pageable = PageRequest.of(0, 2);
 
         when(homeManagementService.findHome(homeId, userId))
                 .thenThrow(new ObjectDoesNotExistException("Home not found", userId));
 
         // WHEN - THEN
         assertThrows(ObjectDoesNotExistException.class, () ->
-                deviceManagementService.getListOfDevices(homeId, userId),
+                deviceManagementService.getListOfDevices(homeId, userId, pageable),
                 "Expected exception when home does not exists"
         );
-        verify(deviceRepository, never()).findAllByHome(any());
+        verify(deviceRepository, never()).findAllByHome(any(), any());
     }
 
     @Test
@@ -167,6 +173,7 @@ public class DeviceManagementServiceTest {
         UUID homeId = UUID.randomUUID();
         UUID userId = UUID.randomUUID();
         Home home = new Home();
+        Pageable pageable = PageRequest.of(0, 2);
 
         when(homeManagementService.findHome(homeId, userId)).thenReturn(home);
         doThrow(new ObjectDoesNotExistException("Object", userId))
@@ -174,7 +181,7 @@ public class DeviceManagementServiceTest {
 
         // WHEN - THEN
         assertThrows(ObjectDoesNotExistException.class, () ->
-                deviceManagementService.getListOfDevices(homeId, userId),
+                deviceManagementService.getListOfDevices(homeId, userId, pageable),
                 "Expected exception when user has no access"
         );
     }
@@ -579,4 +586,6 @@ public class DeviceManagementServiceTest {
                 "Expected exception when user has to low permissions"
         );
     }
+
+
 }

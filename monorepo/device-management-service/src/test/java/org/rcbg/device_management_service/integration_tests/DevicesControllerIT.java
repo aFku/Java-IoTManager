@@ -395,4 +395,37 @@ class DevicesControllerIT extends AbstractIntegrationTest {
                 .exchange()
                 .expectStatus().isOk();
     }
+
+    @Test
+    void getDevices_withPaginationParameters_success() {
+        // GIVEN
+        Home home = createHomeOwnedBy("READ_WRITE_ALL", "Home");
+        grantAccess(home, "READ_ALL_ONLY", HomeAccessRole.VIEWER);
+
+        createDevice(home, "Device A", DeviceType.SENSOR, "secret-1");
+        createDevice(home, "Device B", DeviceType.SENSOR, "secret-2");
+        createDevice(home, "Device C", DeviceType.SENSOR, "secret-3");
+
+        // WHEN & THEN
+        webTestClient.get()
+                .uri(uriBuilder -> uriBuilder
+                        .path("/api/v1/homes/{homeId}/devices")
+                        .queryParam("page", "0")
+                        .queryParam("size", "2")
+                        .queryParam("sort", "name,desc")
+                        .build(home.getHomeId()))
+                .headers(h -> h.setBearerAuth(token("READ_ALL_ONLY")))
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody()
+                .jsonPath("$.content").isArray()
+                .jsonPath("$.content.length()").isEqualTo(2)
+                .jsonPath("$.content[0].name").isEqualTo("Device C")
+                .jsonPath("$.content[1].name").isEqualTo("Device B")
+                .jsonPath("$.totalElements").isEqualTo(3)
+                .jsonPath("$.totalPages").isEqualTo(2)
+                .jsonPath("$.number").isEqualTo(0)
+                .jsonPath("$.size").isEqualTo(2)
+                .jsonPath("$.first").isEqualTo(true);
+    }
 }
