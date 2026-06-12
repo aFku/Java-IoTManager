@@ -1,7 +1,7 @@
 version: '3.9'
 
 services:
-  some-postgres:
+  iot-postgres:
     image: postgres:latest
     container_name: some-postgres
     environment:
@@ -19,7 +19,7 @@ services:
     image: quay.io/keycloak/keycloak:latest
     container_name: iot-keycloak
     depends_on:
-      - some-postgres
+      - iot-postgres
     command:
       - start-dev
       - --import-realm
@@ -52,6 +52,20 @@ services:
       - "6379:6379"
     networks:
       - shared-network
+  iot-vault:
+    image: hashicorp/vault:latest
+    container_name: "iot-vault"
+    ports:
+      - "8200:8200"
+    environment:
+      VAULT_DEV_ROOT_TOKEN_ID: "00000000-0000-0000-0000-000000000000"
+      VAULT_DEV_LISTEN_ADDRESS: "0.0.0.0:8200"
+    networks:
+      - shared-network
+    volumes:
+      - "vaultdata:/vault/file"
+    cap_add:
+      - IPC_LOCK
 
 networks:
   shared-network:
@@ -59,3 +73,4 @@ networks:
 
 volumes:
   pgdata:
+  vaultdata:

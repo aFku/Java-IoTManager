@@ -13,6 +13,7 @@ import org.rcbg.device_management_service.models.entities.Device;
 import org.rcbg.device_management_service.models.entities.Home;
 import org.rcbg.device_management_service.repositories.DeviceRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
@@ -20,6 +21,7 @@ import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.vault.VaultException;
 
 import java.util.List;
 import java.util.UUID;
@@ -36,6 +38,10 @@ public class DeviceManagementService {
     private DeviceMapper deviceMapper;
     @Autowired
     private HomeManagementService homeManagementService;
+    @Autowired
+    private VaultService vaultService;
+    @Value("${spring.cloud.vault.kv.default-context}")
+    private String deviceSecretPath;
 
     @Cacheable(value="devices", key="'single_' + #deviceId + '_' + #userId")
     public ResponseDeviceDto getDevice(UUID homeId, UUID userId, UUID deviceId) {
@@ -58,10 +64,11 @@ public class DeviceManagementService {
     public ResponseDeviceWithSecretDto createDevice(UUID homeId, UUID userId, RequestDeviceDto dto) {
         String secret = UUID.randomUUID().toString().replace("-", "");
         Home home = findHome(homeId, userId, HomeAccessRole.MANAGER);
-        Device device = deviceMapper.toEntity(dto, secret, home);
+        Device device = deviceMapper.toEntity(dto, home);
         Device dbResult = repository.save(device);
+        saveSecret(device.getDeviceId().toString(), secret);
         repository.flush();
-        return deviceMapper.toDtoWithSecret(dbResult);
+        return deviceMapper.toDtoWithSecret(dbResult, secret);
     }
 
     @Transactional
@@ -92,9 +99,8 @@ public class DeviceManagementService {
     public ResponseSecretDto refreshDeviceSecret(UUID homeId, UUID userId, UUID deviceId) {
         Device device = findDevice(homeId, userId, deviceId, HomeAccessRole.MANAGER);
         String secret = UUID.randomUUID().toString().replace("-", "");
-        device.setSecret(secret);
-        Device dbResult = repository.save(device);
-        return new ResponseSecretDto(dbResult.getSecret());
+        saveSecret(device.getDeviceId().toString(), secret);
+        return new ResponseSecretDto(secret);
     }
 
     @Transactional
@@ -128,5 +134,17 @@ public class DeviceManagementService {
                         userId
                 )
         );
+    }
+
+    private void saveSecret(String deviceId, String value) {
+        // One device with secret -> one file.
+        // We are mitigating issues with concurrent modification when all devices in one file
+        // Ingestion service will easily find correct secret based on deviceId only
+        try {
+            vaultService.saveKeyValueSecret(deviceSecretPath + "/" + deviceId , "secret", value);
+        } catch (VaultException e) {
+            log.error("Error while saving device's secret: {}", e.toString());
+            throw new RuntimeException("Internal server error");
+        }
     }
 }

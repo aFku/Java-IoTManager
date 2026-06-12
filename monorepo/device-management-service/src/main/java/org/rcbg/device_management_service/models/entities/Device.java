@@ -33,8 +33,4 @@ public class Device {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "home_id", nullable = false)
     private Home home;
-
-    @NotNull
-    @Column(nullable = false, length = 255)
-    private String secret;
 }
