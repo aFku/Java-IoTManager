@@ -18,10 +18,13 @@ import org.rcbg.device_management_service.models.entities.Home;
 import org.rcbg.device_management_service.repositories.DeviceRepository;
 import org.rcbg.device_management_service.services.DeviceManagementService;
 import org.rcbg.device_management_service.services.HomeManagementService;
+import org.rcbg.device_management_service.services.VaultService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.vault.core.VaultKeyValueOperationsSupport;
+import org.springframework.vault.core.VaultTemplate;
 
 import java.util.Collections;
 import java.util.List;
@@ -45,6 +48,9 @@ public class DeviceManagementServiceTest {
 
     @Mock
     private HomeManagementService homeManagementService;
+
+    @Mock
+    private VaultService vaultService;
 
     @InjectMocks
     private DeviceManagementService deviceManagementService;
@@ -222,6 +228,31 @@ public class DeviceManagementServiceTest {
                 "Expected exception when user has to low permissions"
         );
         verify(deviceRepository, never()).save(any());
+    }
+
+    @Test
+    void testCreateDeviceSuccessful() {
+        UUID homeId = UUID.randomUUID();
+        UUID userId = UUID.randomUUID();
+        UUID deviceId = UUID.randomUUID();
+        Home home = new Home();
+        RequestDeviceDto dto = new RequestDeviceDto();
+        Device mockDevice = new Device();
+
+        when(homeManagementService.findHome(homeId, userId)).thenReturn(home);
+        when(deviceMapper.toEntity(eq(dto), eq(home))).thenReturn(mockDevice);
+
+        when(deviceRepository.save(any(Device.class))).thenAnswer(invocation -> {
+            Device d = invocation.getArgument(0);
+            d.setDeviceId(deviceId);
+            return d;
+        });
+
+        // WHEN - THEN
+        deviceManagementService.createDevice(homeId, userId, dto);
+        verify(deviceRepository, times(1)).save(any());
+        verify(vaultService, times(1))
+                .saveKeyValueSecret(anyString(), anyString(), anyString());
     }
 
     @Test
@@ -475,6 +506,26 @@ public class DeviceManagementServiceTest {
                 "Expected exception when user has not enough permissions"
         );
         verify(deviceRepository, never()).delete(any());
+    }
+
+    @Test
+    void testRefreshDeviceSecretSuccessful() {
+        // GIVEN
+        UUID homeId = UUID.randomUUID();
+        UUID userId = UUID.randomUUID();
+        UUID deviceId = UUID.randomUUID();
+        Home home = new Home();
+        home.setHomeId(homeId);
+        Device device = new Device();
+        device.setDeviceId(deviceId);
+
+        when(homeManagementService.findHome(homeId, userId)).thenReturn(home);
+        when(deviceRepository.findById(deviceId)).thenReturn(Optional.of(device));
+
+        // WHEN - THEN
+        deviceManagementService.refreshDeviceSecret(homeId, userId, deviceId);
+        verify(vaultService, times(1))
+                .saveKeyValueSecret(anyString(), anyString(), anyString());
     }
 
     @Test

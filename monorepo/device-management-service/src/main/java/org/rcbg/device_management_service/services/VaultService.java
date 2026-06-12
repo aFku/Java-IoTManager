@@ -21,7 +21,7 @@ public class VaultService {
         Map<String, String> data = Map.of(key, value);
         vaultTemplate
                 .opsForKeyValue("secret", VaultKeyValueOperationsSupport.KeyValueBackend.versioned())
-                .patch(path, data);
+                .put(path, data);
         log.info("Saved secret {} successfully", key);
     }
 }

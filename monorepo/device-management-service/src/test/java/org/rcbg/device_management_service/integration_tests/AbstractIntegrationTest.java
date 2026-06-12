@@ -23,8 +23,11 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.reactive.server.WebTestClient;
+import org.springframework.vault.core.VaultKeyValueOperationsSupport;
+import org.springframework.vault.core.VaultTemplate;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.springframework.boot.webtestclient.autoconfigure.AutoConfigureWebTestClient;
@@ -50,10 +53,17 @@ public abstract class AbstractIntegrationTest {
     static final KeycloakContainer keycloak = new KeycloakContainer("quay.io/keycloak/keycloak:26.0.7")
             .withRealmImportFile("test-realm.json");
 
+    static final GenericContainer<?> vault = new GenericContainer<>("hashicorp/vault:latest")
+            .withEnv("VAULT_DEV_ROOT_TOKEN_ID", "00000000-0000-0000-0000-000000000000")
+            .withEnv("VAULT_DEV_LISTEN_ADDRESS", "0.0.0.0:8200")
+            .withExposedPorts(8200)
+            .waitingFor(Wait.forLogMessage(".*Vault server started!.*", 1));
+
     static {
         postgres.start();
         redis.start();
         keycloak.start();
+        vault.start();
         System.out.println("ALL CONTAINERS STARTED SUCCESSFULLY");
     }
 
@@ -85,6 +95,12 @@ public abstract class AbstractIntegrationTest {
         );
         registry.add("LOG_LEVEL", () -> "WARN");
         registry.add("DEBUG_ENABLED", () -> "false");
+
+        registry.add("spring.cloud.vault.uri", () ->
+                "http://" + vault.getHost() + ":" + vault.getMappedPort(8200));
+        registry.add("spring.cloud.vault.token", () -> "00000000-0000-0000-0000-000000000000");
+        registry.add("spring.cloud.vault.kv.backend", () -> "secret");
+        registry.add("spring.cloud.vault.kv.default-context", () -> "kv/device-secrets");
     }
 
     @Autowired protected WebTestClient webTestClient;
@@ -94,6 +110,7 @@ public abstract class AbstractIntegrationTest {
     @Autowired protected HomeAccessRepository homeAccessRepository;
     @Autowired protected CacheManager cacheManager;
     @Autowired protected RedisConnectionFactory redisConnectionFactory;
+    @Autowired protected VaultTemplate vaultTemplate;
 
     protected final Map<String, UUID> userIds = new HashMap<>();
     protected final Map<String, String> tokens = new HashMap<>();
@@ -111,6 +128,13 @@ public abstract class AbstractIntegrationTest {
         Optional.ofNullable(cacheManager.getCache("homes")).ifPresent(c -> c.clear());
         Optional.ofNullable(cacheManager.getCache("devices")).ifPresent(c -> c.clear());
         Optional.ofNullable(cacheManager.getCache("homes_members")).ifPresent(c -> c.clear());
+
+        try {
+            vaultTemplate.opsForKeyValue("secret", VaultKeyValueOperationsSupport.KeyValueBackend.versioned())
+                    .delete("kv/device-secrets");
+        } catch (Exception e) {
+            // Ignore
+        }
 
         userIds.clear();
         tokens.clear();
@@ -149,13 +173,21 @@ public abstract class AbstractIntegrationTest {
         return homeAccessRepository.saveAndFlush(access);
     }
 
+    protected void saveDeviceSecret(String path, String key, String value) {
+        Map<String, String> data = Map.of(key, value);
+        vaultTemplate
+                .opsForKeyValue("secret", VaultKeyValueOperationsSupport.KeyValueBackend.versioned())
+                .put(path, data);
+    }
+
     protected Device createDevice(Home home, String name, DeviceType type, String secret) {
         Device device = new Device();
         device.setHome(home);
         device.setName(name);
         device.setDeviceType(type);
-        device.setSecret(secret);
-        return deviceRepository.saveAndFlush(device);
+        device = deviceRepository.saveAndFlush(device);
+        saveDeviceSecret("kv/device-secrets/" + device.getDeviceId().toString(), "secret", secret);
+        return device;
     }
 
     protected Map<String, Object> validHomeBody(String name) {
