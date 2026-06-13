@@ -1,5 +1,6 @@
 package org.rcbg.device_management_service.integration_tests;
 
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.rcbg.device_management_service.enums.DeviceType;
 import org.rcbg.device_management_service.enums.HomeAccessRole;
@@ -10,6 +11,7 @@ import org.rcbg.device_management_service.models.dto.errors.StandardProblemDetai
 import org.rcbg.device_management_service.models.entities.Device;
 import org.rcbg.device_management_service.models.entities.Home;
 import org.springframework.http.MediaType;
+import org.springframework.vault.core.VaultKeyValueOperationsSupport;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.util.Map;
@@ -249,6 +251,10 @@ class DevicesControllerIT extends AbstractIntegrationTest {
                 .headers(h -> h.setBearerAuth(token("READ_WRITE_ALL")))
                 .exchange()
                 .expectStatus().isNoContent();
+
+        Assertions.assertNull(vaultTemplate
+                .opsForKeyValue("kv/device-secrets/" + device.getDeviceId().toString(), VaultKeyValueOperationsSupport.KeyValueBackend.versioned())
+                .get("secret"), "Secret has not been deleted along with device");
     }
 
     @Test

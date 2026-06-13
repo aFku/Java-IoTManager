@@ -92,6 +92,7 @@ public class DeviceManagementService {
     public void deleteDevice(UUID homeId, UUID userId, UUID deviceId) {
         Device device = findDevice(homeId, userId, deviceId, HomeAccessRole.MANAGER);
         repository.delete(device);
+        deleteSecret(deviceId.toString());
         return;
     }
 
@@ -144,6 +145,15 @@ public class DeviceManagementService {
             vaultService.saveKeyValueSecret(deviceSecretPath + "/" + deviceId , "secret", value);
         } catch (VaultException e) {
             log.error("Error while saving device's secret: {}", e.toString());
+            throw new RuntimeException("Internal server error");
+        }
+    }
+
+    private void deleteSecret(String deviceId) {
+        try {
+            vaultService.deleteKeyValueSecret(deviceSecretPath + "/" + deviceId);
+        } catch (VaultException e) {
+            log.error("Error while deleting device's secret: {}", e.toString());
             throw new RuntimeException("Internal server error");
         }
     }

@@ -6,6 +6,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.vault.core.VaultKeyValueOperationsSupport;
 import org.springframework.vault.core.VaultTemplate;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 @Slf4j
@@ -22,6 +24,22 @@ public class VaultService {
         vaultTemplate
                 .opsForKeyValue("secret", VaultKeyValueOperationsSupport.KeyValueBackend.versioned())
                 .put(path, data);
-        log.info("Saved secret {} successfully", key);
+        log.info("Saved secret {} successfully", path);
+    }
+
+    public void deleteKeyValueSecret(String path) {
+        log.info("Deleting secret in path {}", path);
+        vaultTemplate
+                .opsForKeyValue("secret", VaultKeyValueOperationsSupport.KeyValueBackend.versioned())
+                .delete(path);
+        log.info("Deleted secret {} successfully", path);
+    }
+
+    public List<String> listSecretKeys(String basePath) {
+        log.info("Listing secrets for path: {}", basePath);
+        List<String> keys = vaultTemplate
+                .opsForKeyValue("secret", VaultKeyValueOperationsSupport.KeyValueBackend.versioned())
+                .list(basePath);
+        return keys != null ? keys : Collections.emptyList();
     }
 }
